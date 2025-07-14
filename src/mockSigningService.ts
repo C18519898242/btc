@@ -22,47 +22,25 @@ export class MockSigningService implements SigningService {
     }
 
     private loadKeyPairs(): void {
-        // Load from keys.json (its own managed keys)
         try {
             if (fs.existsSync(this.filePath)) {
                 const data = fs.readFileSync(this.filePath, 'utf-8');
                 if (data) {
                     const keyPairsWIF = JSON.parse(data);
+                    const network = bitcoin.networks.testnet; // Assuming all keys in keys.json are for testnet
                     for (const keyId in keyPairsWIF) {
                         if (Object.prototype.hasOwnProperty.call(keyPairsWIF, keyId)) {
                             const wif = keyPairsWIF[keyId];
-                            const keyPair = ECPair.fromWIF(wif);
+                            const keyPair = ECPair.fromWIF(wif, network);
                             this.keyPairs.set(keyId, keyPair);
                         }
                     }
+                    logger.info(`Loaded ${this.keyPairs.size} keys from ${this.filePath}`);
                 }
             }
         } catch (error) {
             logger.error(`Error loading key pairs from ${this.filePath}:`, error);
         }
-
-        // Also load from wallet.json to be aware of test wallets
-        try {
-            const walletPath = 'wallet.json';
-            if (fs.existsSync(walletPath)) {
-                const wallets = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
-                const networkMap = {
-                    'testnet': bitcoin.networks.testnet,
-                    'testnet4': bitcoin.networks.testnet,
-                    'mainnet': bitcoin.networks.bitcoin,
-                };
-                for (const wallet of wallets) {
-                    if (wallet.id && wallet.privateKey && !this.keyPairs.has(wallet.id)) {
-                        const network = networkMap[wallet.network as keyof typeof networkMap] || bitcoin.networks.testnet;
-                        const keyPair = ECPair.fromWIF(wallet.privateKey, network);
-                        this.keyPairs.set(wallet.id, keyPair);
-                    }
-                }
-            }
-        } catch (error) {
-            logger.error(`Error loading key pairs from wallet.json:`, error);
-        }
-        logger.info(`Loaded a total of ${this.keyPairs.size} keys`);
     }
 
     private saveKeyPairs(): void {
