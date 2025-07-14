@@ -15,10 +15,10 @@ function main() {
             break;
         default:
             logger.info('Invalid command. Available commands: generate, monitor');
-            console.log('Usage: npm start <command>');
-            console.log('Examples:');
-            console.log('  npm start generate   # Generate a new wallet');
-            console.log('  npm start monitor    # Monitor balances of all wallets');
+            logger.info('Usage: npm start <command>');
+            logger.info('Examples:');
+            logger.info('  npm start generate   # Generate a new wallet');
+            logger.info('  npm start monitor    # Monitor balances of all wallets');
     }
 }
 
