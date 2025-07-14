@@ -31,17 +31,40 @@ interface Balance {
 }
 
 async function getBalance(address: string): Promise<Balance> {
-    const networkConfig = config.networks[config.network as keyof typeof config.networks];
-    const url = `${networkConfig.api_url}/address/${address}/utxo`;
+    const networkName = config.network as keyof typeof config.networks;
+    const networkConfig = config.networks[networkName];
+    const apiProvider = config.api_provider as keyof typeof networkConfig;
+    const providerConfig = (networkConfig as any)[apiProvider];
+
+    if (!providerConfig || !providerConfig.api_url) {
+        throw new Error(`API provider '${apiProvider}' is not configured for network '${networkName}' in config.json`);
+    }
+
+    const url = `${providerConfig.api_url}/address/${address}/utxo`;
+
     try {
-        const { data: utxos } = await axios.get<Utxo[]>(url);
-        const confirmed = utxos
-            .filter(utxo => utxo.status.confirmed)
-            .reduce((acc, utxo) => acc + utxo.value, 0);
-        const unconfirmed = utxos
-            .filter(utxo => !utxo.status.confirmed)
-            .reduce((acc, utxo) => acc + utxo.value, 0);
-        return { confirmed, unconfirmed };
+        if (config.api_provider === 'mempool') {
+            const { data: utxos } = await axios.get<Utxo[]>(url);
+            const confirmed = utxos
+                .filter(utxo => utxo.status.confirmed)
+                .reduce((acc, utxo) => acc + utxo.value, 0);
+            const unconfirmed = utxos
+                .filter(utxo => !utxo.status.confirmed)
+                .reduce((acc, utxo) => acc + utxo.value, 0);
+            return { confirmed, unconfirmed };
+        } else if (config.api_provider === 'blockstream') {
+            const { data: utxos } = await axios.get<any[]>(url);
+            const confirmed = utxos
+                .filter(utxo => utxo.status.confirmed)
+                .reduce((acc, utxo) => acc + utxo.value, 0);
+            // Blockstream API does not provide unconfirmed balance in the same way
+            const unconfirmed = utxos
+                .filter(utxo => !utxo.status.confirmed)
+                .reduce((acc, utxo) => acc + utxo.value, 0);
+            return { confirmed, unconfirmed };
+        } else {
+            throw new Error(`Unsupported API provider: ${config.api_provider}`);
+        }
     } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 404) {
             logger.warn(`No transactions found for address ${address}.`);

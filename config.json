@@ -1,11 +1,24 @@
 {
     "network": "testnet4",
+    "api_provider": "mempool",
     "networks": {
         "mainnet": {
-            "api_url": "https://mempool.space/api"
+            "mempool": {
+                "api_url": "https://mempool.space/api"
+            },
+            "blockstream": {
+                "api_url": "https://blockstream.info/api"
+            }
+        },
+        "testnet": {
+            "blockstream": {
+                "api_url": "https://blockstream.info/testnet/api"
+            }
         },
         "testnet4": {
-            "api_url": "https://mempool.space/testnet4/api"
+            "mempool": {
+                "api_url": "https://mempool.space/testnet4/api"
+            }
         }
     }
 }
