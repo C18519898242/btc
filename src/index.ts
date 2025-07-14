@@ -10,6 +10,14 @@ import config from '../config.json';
 import * as fs from 'fs';
 import * as bitcoin from 'bitcoinjs-lib';
 
+// Custom interface to handle witness UTXO property
+interface PsbtInputWithWitness extends bitcoin.PsbtTxInput {
+    witnessUtxo?: {
+        script: Buffer;
+        value: number;
+    };
+}
+
 function getProvider(): Provider {
     const networkName = config.network as keyof typeof config.networks;
     const networkConfig = config.networks[networkName];
@@ -55,13 +63,30 @@ async function main() {
             try {
                 const psbtBase64 = fs.readFileSync(0, 'utf-8').trim();
                 const psbt = bitcoin.Psbt.fromBase64(psbtBase64);
-                const address = (psbt.txInputs[0] as any).witnessUtxo.script.toString('hex'); // A bit of a hack to get the address
+
+                // Correctly derive the address from the PSBT's input
+                const networkName = config.network as keyof typeof config.networks;
+                const network = networkName === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
+                const firstInput = psbt.txInputs[0] as PsbtInputWithWitness;
+                if (!firstInput || !firstInput.witnessUtxo) {
+                    throw new Error('PSBT is missing witness UTXO for the first input.');
+                }
+                const address = bitcoin.address.fromOutputScript(firstInput.witnessUtxo.script, network);
+
                 const wallets = JSON.parse(fs.readFileSync('wallet.json', 'utf-8'));
                 const sourceWallet = wallets.find((w: any) => w.address === address);
+
                 if (!sourceWallet) {
                     throw new Error(`Wallet not found for address: ${address}`);
                 }
-                const txid = await provider.sendTx(psbt, sourceWallet.privateKey);
+
+                const signingService = new MockSigningService();
+                const signedPsbt = signingService.signPsbt(psbt, sourceWallet.id);
+                
+                signedPsbt.finalizeAllInputs();
+                
+                const txHex = signedPsbt.extractTransaction().toHex();
+                const txid = await provider.sendTx(txHex);
                 logger.info(`Transaction sent! TXID: ${txid}`);
             } catch (error) {
                 logger.error('Error sending transaction:', error);

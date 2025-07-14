@@ -109,15 +109,7 @@ export class MempoolProvider implements Provider {
         return psbt;
     }
 
-    async sendTx(psbt: bitcoin.Psbt, privateKey: string): Promise<string> {
-        const networkName = config.network as keyof typeof config.networks;
-        const network = networkName === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
-        const keyPair = ECPair.fromWIF(privateKey, network);
-        psbt.data.inputs.forEach((_, index) => {
-            psbt.signInput(index, keyPair as any);
-        });
-        psbt.finalizeAllInputs();
-        const txHex = psbt.extractTransaction().toHex();
+    async sendTx(txHex: string): Promise<string> {
         const { data: txid } = await axios.post(`${this.apiUrl}/tx`, txHex);
         return txid;
     }

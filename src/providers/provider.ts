@@ -4,7 +4,6 @@ export interface Balance {
 }
 
 import * as bitcoin from 'bitcoinjs-lib';
-
 export interface InputTransaction {
     customerRefId: string;
     customerExt1: string;
@@ -22,5 +21,5 @@ export interface InputTransaction {
 export interface Provider {
     getBalance(address: string): Promise<Balance>;
     createTransaction(tx: InputTransaction): Promise<bitcoin.Psbt>;
-    sendTx(psbt: bitcoin.Psbt, privateKey: string): Promise<string>;
+    sendTx(txHex: string): Promise<string>;
 }
