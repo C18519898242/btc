@@ -1,0 +1,11 @@
+{
+    "network": "testnet4",
+    "networks": {
+        "mainnet": {
+            "api_url": "https://mempool.space/api"
+        },
+        "testnet4": {
+            "api_url": "https://mempool.space/testnet4/api"
+        }
+    }
+}

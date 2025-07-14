@@ -4,61 +4,72 @@ import ECPairFactory from 'ecpair';
 import * as fs from 'fs';
 import * as path from 'path';
 import logger from './logger';
+import { monitorWallets } from './monitor';
+import config from '../config.json';
 
-// 初始化 ECPair
 const ECPair = ECPairFactory(ecc);
-
-// 创建一个新的随机密钥对
-const keyPair = ECPair.makeRandom();
-
-// 将公钥转换为 Buffer
-const publicKeyBuffer = Buffer.from(keyPair.publicKey);
-
-// 获取 P2PKH 地址
-const { address } = bitcoin.payments.p2pkh({ pubkey: publicKeyBuffer });
-
-// 准备要保存的钱包数据
-const wallet = {
-    privateKey: keyPair.toWIF(),
-    publicKey: publicKeyBuffer.toString('hex'),
-    address: address,
-};
-
-// 定义钱包文件的路径
 const walletPath = path.join(__dirname, '..', 'wallet.json');
 
-try {
-    // 确保目录存在
-    fs.mkdirSync(path.dirname(walletPath), { recursive: true });
+function generateWallet() {
+    const networkName = config.network;
+    const network = networkName === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
 
-    // 读取现有钱包文件（如果存在）
-    let wallets = [];
-    if (fs.existsSync(walletPath)) {
-        try {
-            const fileContent = fs.readFileSync(walletPath, 'utf-8');
-            // 确保文件内容不为空
-            if (fileContent) {
-                wallets = JSON.parse(fileContent);
-                // 如果不是数组，则将其放入数组中以进行兼容
-                if (!Array.isArray(wallets)) {
-                    wallets = [wallets];
+    logger.info(`开始为 ${networkName} 生成新钱包...`);
+    const keyPair = ECPair.makeRandom({ network });
+    const publicKeyBuffer = Buffer.from(keyPair.publicKey);
+    const { address } = bitcoin.payments.p2pkh({ pubkey: publicKeyBuffer, network });
+
+    const wallet = {
+        network: networkName,
+        privateKey: keyPair.toWIF(),
+        publicKey: publicKeyBuffer.toString('hex'),
+        address: address,
+    };
+
+    try {
+        fs.mkdirSync(path.dirname(walletPath), { recursive: true });
+        let wallets = [];
+        if (fs.existsSync(walletPath)) {
+            try {
+                const fileContent = fs.readFileSync(walletPath, 'utf-8');
+                if (fileContent) {
+                    wallets = JSON.parse(fileContent);
+                    if (!Array.isArray(wallets)) {
+                        wallets = [wallets];
+                    }
                 }
+            } catch (e) {
+                logger.error('解析 wallet.json 时出错，将创建一个新文件。', e);
+                wallets = [];
             }
-        } catch (e) {
-            logger.error('解析 wallet.json 时出错，将创建一个新文件。', e);
-            wallets = []; // 如果文件损坏，则重置
         }
+        wallets.push(wallet);
+        fs.writeFileSync(walletPath, JSON.stringify(wallets, null, 2));
+        logger.info(`新钱包已成功添加到 ${walletPath}`);
+        logger.info(`地址: ${address}`);
+    } catch (error) {
+        logger.error('保存钱包文件时出错:', error);
     }
-
-    // 将新钱包添加到数组中
-    wallets.push(wallet);
-
-    // 将更新后的数组写回文件
-    fs.writeFileSync(walletPath, JSON.stringify(wallets, null, 2));
-
-    logger.info(`新钱包已成功添加到 ${walletPath}`);
-    logger.info(`地址: ${address}`);
-    logger.debug('新钱包详情: %o', wallet);
-} catch (error) {
-    logger.error('保存钱包文件时出错:', error);
 }
+
+function main() {
+    const args = process.argv.slice(2);
+    const command = args[0];
+
+    switch (command) {
+        case 'generate':
+            generateWallet();
+            break;
+        case 'monitor':
+            monitorWallets();
+            break;
+        default:
+            logger.info('无效的命令。可用命令: generate, monitor');
+            console.log('用法: npm start <command>');
+            console.log('例如:');
+            console.log('  npm start generate   # 生成一个新钱包');
+            console.log('  npm start monitor    # 监控所有钱包的余额');
+    }
+}
+
+main();

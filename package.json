@@ -5,7 +5,9 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "ts-node src/index.ts"
+        "start": "ts-node src/index.ts",
+        "generate": "ts-node src/index.ts generate",
+        "monitor": "ts-node src/index.ts monitor"
     },
     "keywords": [],
     "author": "",
@@ -16,6 +18,7 @@
         "typescript": "^5.8.3"
     },
     "dependencies": {
+        "axios": "^1.10.0",
         "bitcoinjs-lib": "^6.1.7",
         "ecpair": "^3.0.0",
         "tiny-secp256k1": "^2.2.4",
