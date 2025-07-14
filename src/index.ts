@@ -87,6 +87,24 @@ async function main() {
                 logger.error('Error sending transaction:', error);
             }
             break;
+        case 'test-e2e-tx':
+            try {
+                logger.info('Running end-to-end transaction test...');
+                const txInput: InputTransaction = JSON.parse(fs.readFileSync('case/tx.json', 'utf-8'));
+                
+                // 1. Create Transaction
+                const psbt = await provider.createTransaction(txInput);
+                logger.info('PSBT created.');
+
+                // 2. Sign and Send Transaction
+                const sourceWalletId = txInput.sourceAccountKey;
+                const signingService = new MockSigningService();
+                const txid = await provider.sendTx(psbt, signingService, sourceWalletId);
+                logger.info(`Transaction sent successfully! TXID: ${txid}`);
+            } catch (error) {
+                logger.error('End-to-end transaction test failed:', error);
+            }
+            break;
         case 'test-signer':
             {
                 logger.info('Testing SigningService...');
@@ -99,7 +117,7 @@ async function main() {
             }
             break;
         default:
-            logger.info('Invalid command. Available commands: generate, monitor, create-tx, send-tx, test-signer');
+            logger.info('Invalid command. Available commands: generate, monitor, create-tx, send-tx, test-signer, test-e2e-tx');
             logger.info('Usage: npm start <command>');
             logger.info('Examples:');
             logger.info('  npm start generate   # Generate a new wallet');
@@ -107,6 +125,7 @@ async function main() {
             logger.info('  cat tx.json | npm start create-tx # Create a new transaction from a json file');
             logger.info('  cat psbt.txt | npm start send-tx # Sign and send a transaction');
             logger.info('  npm start test-signer # Test the signing service');
+            logger.info('  npm start test-e2e-tx # Run an end-to-end transaction test using case/tx.json');
     }
 }
 
