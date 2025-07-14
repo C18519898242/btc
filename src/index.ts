@@ -4,6 +4,7 @@ import { generateWallet } from './wallet';
 import { Provider, InputTransaction } from './providers/provider';
 import { MempoolProvider } from './providers/mempool';
 import { BlockstreamProvider } from './providers/blockstream';
+import { SigningService } from './signingService';
 import config from '../config.json';
 import * as fs from 'fs';
 import * as bitcoin from 'bitcoinjs-lib';
@@ -65,14 +66,26 @@ async function main() {
                 logger.error('Error sending transaction:', error);
             }
             break;
+        case 'test-signer':
+            {
+                logger.info('Testing SigningService...');
+                const signingService = new SigningService('keys.json');
+                const keyId = signingService.createPrivateKey();
+                logger.info(`Created key with ID: ${keyId}`);
+                const publicKey = signingService.getPublicKey(keyId);
+                logger.info(`Retrieved public key: ${publicKey}`);
+                logger.info('Signer test complete.');
+            }
+            break;
         default:
-            logger.info('Invalid command. Available commands: generate, monitor, create-tx, send-tx');
+            logger.info('Invalid command. Available commands: generate, monitor, create-tx, send-tx, test-signer');
             logger.info('Usage: npm start <command>');
             logger.info('Examples:');
             logger.info('  npm start generate   # Generate a new wallet');
             logger.info('  npm start monitor    # Monitor balances of all wallets');
             logger.info('  cat tx.json | npm start create-tx # Create a new transaction from a json file');
             logger.info('  cat psbt.txt | npm start send-tx # Sign and send a transaction');
+            logger.info('  npm start test-signer # Test the signing service');
     }
 }
 
