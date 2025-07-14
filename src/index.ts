@@ -14,7 +14,7 @@ function generateWallet() {
     const networkName = config.network;
     const network = networkName === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
 
-    logger.info(`开始为 ${networkName} 生成新钱包...`);
+    logger.info(`Generating new wallet for ${networkName}...`);
     const keyPair = ECPair.makeRandom({ network });
     const publicKeyBuffer = Buffer.from(keyPair.publicKey);
     const { address } = bitcoin.payments.p2pkh({ pubkey: publicKeyBuffer, network });
@@ -39,16 +39,16 @@ function generateWallet() {
                     }
                 }
             } catch (e) {
-                logger.error('解析 wallet.json 时出错，将创建一个新文件。', e);
+                logger.error('Error parsing wallet.json, creating a new file.', e);
                 wallets = [];
             }
         }
         wallets.push(wallet);
         fs.writeFileSync(walletPath, JSON.stringify(wallets, null, 2));
-        logger.info(`新钱包已成功添加到 ${walletPath}`);
-        logger.info(`地址: ${address}`);
+        logger.info(`New wallet successfully added to ${walletPath}`);
+        logger.info(`Address: ${address}`);
     } catch (error) {
-        logger.error('保存钱包文件时出错:', error);
+        logger.error('Error saving wallet file:', error);
     }
 }
 
@@ -64,11 +64,11 @@ function main() {
             monitorWallets();
             break;
         default:
-            logger.info('无效的命令。可用命令: generate, monitor');
-            console.log('用法: npm start <command>');
-            console.log('例如:');
-            console.log('  npm start generate   # 生成一个新钱包');
-            console.log('  npm start monitor    # 监控所有钱包的余额');
+            logger.info('Invalid command. Available commands: generate, monitor');
+            console.log('Usage: npm start <command>');
+            console.log('Examples:');
+            console.log('  npm start generate   # Generate a new wallet');
+            console.log('  npm start monitor    # Monitor balances of all wallets');
     }
 }
 

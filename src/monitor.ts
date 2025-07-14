@@ -25,54 +25,64 @@ interface Utxo {
 
 const walletPath = path.join(__dirname, '..', 'wallet.json');
 
-async function getBalance(address: string): Promise<number> {
+interface Balance {
+    confirmed: number;
+    unconfirmed: number;
+}
+
+async function getBalance(address: string): Promise<Balance> {
     const networkConfig = config.networks[config.network as keyof typeof config.networks];
     const url = `${networkConfig.api_url}/address/${address}/utxo`;
     try {
         const { data: utxos } = await axios.get<Utxo[]>(url);
-        const balance = utxos
+        const confirmed = utxos
             .filter(utxo => utxo.status.confirmed)
             .reduce((acc, utxo) => acc + utxo.value, 0);
-        return balance;
+        const unconfirmed = utxos
+            .filter(utxo => !utxo.status.confirmed)
+            .reduce((acc, utxo) => acc + utxo.value, 0);
+        return { confirmed, unconfirmed };
     } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 404) {
-            logger.warn(`地址 ${address} 没有交易记录。`);
-            return 0;
+            logger.warn(`No transactions found for address ${address}.`);
+            return { confirmed: 0, unconfirmed: 0 };
         }
-        logger.error(`获取地址 ${address} 余额时出错:`, error);
+        logger.error(`Error fetching balance for address ${address}:`, error);
         throw error;
     }
 }
 
 export async function monitorWallets() {
-    logger.info(`开始监控 ${config.network} 上的钱包...`);
+    logger.info(`Starting to monitor wallets on ${config.network}...`);
     if (!fs.existsSync(walletPath)) {
-        logger.warn('wallet.json 文件不存在。请先生成钱包。');
+        logger.warn('wallet.json file not found. Please generate a wallet first.');
         return;
     }
 
     const allWallets: Wallet[] = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
     if (!Array.isArray(allWallets) || allWallets.length === 0) {
-        logger.warn('wallet.json 中没有找到钱包。');
+        logger.warn('No wallets found in wallet.json.');
         return;
     }
 
-    // 根据当前网络过滤钱包
+    // Filter wallets based on the current network
     const walletsToMonitor = allWallets.filter(w => w.network === config.network);
 
     if (walletsToMonitor.length === 0) {
-        logger.warn(`在 wallet.json 中没有找到 ${config.network} 的钱包。`);
+        logger.warn(`No wallets found for the ${config.network} network in wallet.json.`);
         return;
     }
 
-    logger.info(`找到 ${walletsToMonitor.length} 个 ${config.network} 钱包进行监控。`);
+    logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
 
     for (const wallet of walletsToMonitor) {
         try {
             const balance = await getBalance(wallet.address);
-            logger.info(`地址: ${wallet.address} | 余额: ${balance} satoshis`);
+            const btcBalance = balance.confirmed / 100_000_000;
+            const pendingBtc = balance.unconfirmed / 100_000_000;
+            logger.info(`Address: ${wallet.address} | Balance: ${balance.confirmed} satoshis (${btcBalance.toFixed(8)} BTC) | Pending: ${balance.unconfirmed} satoshis (${pendingBtc.toFixed(8)} BTC)`);
         } catch (error) {
-            // 错误已在 getBalance 中记录
+            // Error is already logged in getBalance
         }
     }
 }
