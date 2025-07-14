@@ -80,7 +80,8 @@ export async function monitorWallets() {
             try {
                 const balance = await getBalance(wallet.address);
                 const btcBalance = balance.confirmed / 100_000_000;
-                logger.info(`Address: ${wallet.address} | Current Balance: ${btcBalance.toFixed(8)} BTC`);
+                const pendingBtc = balance.unconfirmed / 100_000_000;
+                logger.info(`Address: ${wallet.address} | Current Balance: ${btcBalance.toFixed(8)} BTC | Pending: ${pendingBtc.toFixed(8)} BTC`);
             } catch (error) {
                 // Error is already logged in getBalance
             }
