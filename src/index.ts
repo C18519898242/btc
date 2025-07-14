@@ -18,30 +18,33 @@ interface PsbtInputWithWitness extends bitcoin.PsbtTxInput {
     };
 }
 
-function getProvider(): Provider {
-    const networkName = config.network as keyof typeof config.networks;
-    const networkConfig = config.networks[networkName];
-    const apiProvider = config.api_provider as keyof typeof networkConfig;
+function getProviderForNetwork(networkName: string): Provider {
+    const networkConfig = config.networks[networkName as keyof typeof config.networks];
+    if (!networkConfig) {
+        throw new Error(`Network '${networkName}' is not configured in config.json`);
+    }
+
+    // Use the first configured provider for the network (e.g., mempool or blockstream)
+    const apiProvider = Object.keys(networkConfig)[0];
     const providerConfig = (networkConfig as any)[apiProvider];
 
     if (!providerConfig || !providerConfig.api_url) {
-        throw new Error(`API provider '${apiProvider}' is not configured for network '${networkName}' in config.json`);
+        throw new Error(`API provider is not configured for network '${networkName}' in config.json`);
     }
 
-    switch (config.api_provider) {
+    switch (apiProvider) {
         case 'mempool':
             return new MempoolProvider(providerConfig.api_url);
         case 'blockstream':
             return new BlockstreamProvider(providerConfig.api_url);
         default:
-            throw new Error(`Unsupported API provider: ${config.api_provider}`);
+            throw new Error(`Unsupported API provider: ${apiProvider}`);
     }
 }
 
 async function main() {
     const args = process.argv.slice(2);
     const command = args[0];
-    const provider = getProvider();
 
     switch (command) {
         case 'generate':
@@ -51,8 +54,11 @@ async function main() {
             monitorWallets();
             break;
         case 'create-tx':
+            // This command would need refactoring to determine network from input
+            logger.warn('The `create-tx` command currently uses the global config and may not work for all wallets.');
             try {
                 const txInput: InputTransaction = JSON.parse(fs.readFileSync(0, 'utf-8'));
+                const provider = getProviderForNetwork(config.network);
                 const psbt = await provider.createTransaction(txInput);
                 console.log(psbt.toBase64());
             } catch (error) {
@@ -60,6 +66,8 @@ async function main() {
             }
             break;
         case 'send-tx':
+            // This command would need refactoring to determine network from PSBT
+            logger.warn('The `send-tx` command currently uses the global config and may not work for all wallets.');
             try {
                 const psbtBase64 = fs.readFileSync(0, 'utf-8').trim();
                 const psbt = bitcoin.Psbt.fromBase64(psbtBase64);
@@ -79,7 +87,8 @@ async function main() {
                 if (!sourceWallet) {
                     throw new Error(`Wallet not found for address: ${address}`);
                 }
-
+                
+                const provider = getProviderForNetwork(sourceWallet.network);
                 const signingService = new MockSigningService();
                 const txid = await provider.sendTx(psbt, signingService, sourceWallet.id);
                 logger.info(`Transaction sent! TXID: ${txid}`);
@@ -99,6 +108,15 @@ async function main() {
                     try {
                         const txInput: InputTransaction = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
                         
+                        // Dynamically get provider based on wallet network
+                        const wallets = JSON.parse(fs.readFileSync('wallet.json', 'utf-8'));
+                        const sourceWallet = wallets.find((w: any) => w.id === txInput.sourceAccountKey);
+                        if (!sourceWallet) {
+                            throw new Error(`Source wallet ${txInput.sourceAccountKey} not found in wallet.json`);
+                        }
+                        const provider = getProviderForNetwork(sourceWallet.network);
+                        logger.info(`Using network ${sourceWallet.network} for this transaction.`);
+
                         // 1. Create Transaction
                         const psbt = await provider.createTransaction(txInput);
                         logger.info('PSBT created.');

@@ -23,21 +23,41 @@ export class MockSigningService implements SigningService {
 
     private loadKeyPairs(): void {
         try {
-            if (fs.existsSync(this.filePath)) {
-                const data = fs.readFileSync(this.filePath, 'utf-8');
-                if (data) {
-                    const keyPairsWIF = JSON.parse(data);
-                    const network = bitcoin.networks.testnet; // Assuming all keys in keys.json are for testnet
-                    for (const keyId in keyPairsWIF) {
-                        if (Object.prototype.hasOwnProperty.call(keyPairsWIF, keyId)) {
-                            const wif = keyPairsWIF[keyId];
-                            const keyPair = ECPair.fromWIF(wif, network);
-                            this.keyPairs.set(keyId, keyPair);
+            if (!fs.existsSync(this.filePath)) {
+                return;
+            }
+            const data = fs.readFileSync(this.filePath, 'utf-8');
+            if (!data) {
+                return;
+            }
+
+            const keyPairsWIF = JSON.parse(data);
+            const possibleNetworks = [bitcoin.networks.bitcoin, bitcoin.networks.testnet];
+
+            for (const keyId in keyPairsWIF) {
+                if (Object.prototype.hasOwnProperty.call(keyPairsWIF, keyId)) {
+                    const wif = keyPairsWIF[keyId];
+                    let keyPair: ECPairInterface | null = null;
+                    
+                    for (const network of possibleNetworks) {
+                        try {
+                            keyPair = ECPair.fromWIF(wif, network);
+                            // Success, break the loop
+                            break;
+                        } catch (e) {
+                            // Ignore error, try next network
                         }
                     }
-                    logger.info(`Loaded ${this.keyPairs.size} keys from ${this.filePath}`);
+
+                    if (keyPair) {
+                        this.keyPairs.set(keyId, keyPair);
+                    } else {
+                        logger.warn(`Could not determine network for WIF associated with keyId ${keyId}. Skipping.`);
+                    }
                 }
             }
+            logger.info(`Loaded ${this.keyPairs.size} keys from ${this.filePath}`);
+
         } catch (error) {
             logger.error(`Error loading key pairs from ${this.filePath}:`, error);
         }

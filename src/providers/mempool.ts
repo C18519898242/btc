@@ -81,8 +81,9 @@ export class MempoolProvider implements Provider {
 
         // Get and log balance
         const balance = await this.getBalance(sourceAddress);
+        const totalBalance = balance.confirmed + balance.unconfirmed;
         const amountToSend = Math.floor(parseFloat(tx.txAmount) * 100_000_000);
-        logger.info(`Source wallet ${sourceAddress} balance: ${balance.confirmed} satoshis.`);
+        logger.info(`Source wallet ${sourceAddress} balance: ${totalBalance} satoshis (${balance.confirmed} confirmed, ${balance.unconfirmed} unconfirmed).`);
         logger.info(`Attempting to send: ${amountToSend} satoshis.`);
 
         // Determine destination address
@@ -109,18 +110,17 @@ export class MempoolProvider implements Provider {
         const psbt = new bitcoin.Psbt({ network });
         let totalInput = 0;
 
+        // Use both confirmed and unconfirmed UTXOs
         for (const utxo of utxos) {
-            if (utxo.status.confirmed) {
-                psbt.addInput({
-                    hash: utxo.txid,
-                    index: utxo.vout,
-                    nonWitnessUtxo: Buffer.from(
-                        (await axios.get(`${this.apiUrl}/tx/${utxo.txid}/hex`)).data,
-                        'hex'
-                    ),
-                });
-                totalInput += utxo.value;
-            }
+            psbt.addInput({
+                hash: utxo.txid,
+                index: utxo.vout,
+                nonWitnessUtxo: Buffer.from(
+                    (await axios.get(`${this.apiUrl}/tx/${utxo.txid}/hex`)).data,
+                    'hex'
+                ),
+            });
+            totalInput += utxo.value;
         }
 
         psbt.addOutput({
