@@ -1,8 +1,10 @@
-import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import logger from './logger';
 import config from '../config.json';
+import { Provider } from './providers/provider';
+import { MempoolProvider } from './providers/mempool';
+import { BlockstreamProvider } from './providers/blockstream';
 
 interface Wallet {
     address: string;
@@ -11,26 +13,9 @@ interface Wallet {
     network: string;
 }
 
-interface Utxo {
-    txid: string;
-    vout: number;
-    status: {
-        confirmed: boolean;
-        block_height: number;
-        block_hash: string;
-        block_time: number;
-    };
-    value: number;
-}
-
 const walletPath = path.join(__dirname, '..', 'wallet.json');
 
-interface Balance {
-    confirmed: number;
-    unconfirmed: number;
-}
-
-async function getBalance(address: string): Promise<Balance> {
+function getProvider(): Provider {
     const networkName = config.network as keyof typeof config.networks;
     const networkConfig = config.networks[networkName];
     const apiProvider = config.api_provider as keyof typeof networkConfig;
@@ -40,38 +25,13 @@ async function getBalance(address: string): Promise<Balance> {
         throw new Error(`API provider '${apiProvider}' is not configured for network '${networkName}' in config.json`);
     }
 
-    const url = `${providerConfig.api_url}/address/${address}/utxo`;
-
-    try {
-        if (config.api_provider === 'mempool') {
-            const { data: utxos } = await axios.get<Utxo[]>(url);
-            const confirmed = utxos
-                .filter(utxo => utxo.status.confirmed)
-                .reduce((acc, utxo) => acc + utxo.value, 0);
-            const unconfirmed = utxos
-                .filter(utxo => !utxo.status.confirmed)
-                .reduce((acc, utxo) => acc + utxo.value, 0);
-            return { confirmed, unconfirmed };
-        } else if (config.api_provider === 'blockstream') {
-            const { data: utxos } = await axios.get<any[]>(url);
-            const confirmed = utxos
-                .filter(utxo => utxo.status.confirmed)
-                .reduce((acc, utxo) => acc + utxo.value, 0);
-            // Blockstream API does not provide unconfirmed balance in the same way
-            const unconfirmed = utxos
-                .filter(utxo => !utxo.status.confirmed)
-                .reduce((acc, utxo) => acc + utxo.value, 0);
-            return { confirmed, unconfirmed };
-        } else {
+    switch (config.api_provider) {
+        case 'mempool':
+            return new MempoolProvider(providerConfig.api_url);
+        case 'blockstream':
+            return new BlockstreamProvider(providerConfig.api_url);
+        default:
             throw new Error(`Unsupported API provider: ${config.api_provider}`);
-        }
-    } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 404) {
-            logger.warn(`No transactions found for address ${address}.`);
-            return { confirmed: 0, unconfirmed: 0 };
-        }
-        logger.error(`Error fetching balance for address ${address}:`, error);
-        throw error;
     }
 }
 
@@ -99,14 +59,15 @@ export async function monitorWallets() {
 
         logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
 
+        const provider = getProvider();
         for (const wallet of walletsToMonitor) {
             try {
-                const balance = await getBalance(wallet.address);
+                const balance = await provider.getBalance(wallet.address);
                 const btcBalance = balance.confirmed / 100_000_000;
                 const pendingBtc = balance.unconfirmed / 100_000_000;
                 logger.info(`Address: ${wallet.address} | Current Balance: ${btcBalance.toFixed(8)} BTC | Pending: ${pendingBtc.toFixed(8)} BTC`);
             } catch (error) {
-                // Error is already logged in getBalance
+                logger.error(`Error fetching balance for wallet ${wallet.address}:`, error);
             }
         }
     };
