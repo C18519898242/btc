@@ -18,8 +18,10 @@ export interface InputTransaction {
     destinationAddress: string;
 }
 
+import { SigningService } from '../signingService';
+
 export interface Provider {
     getBalance(address: string): Promise<Balance>;
     createTransaction(tx: InputTransaction): Promise<bitcoin.Psbt>;
-    sendTx(txHex: string): Promise<string>;
+    sendTx(psbt: bitcoin.Psbt, signingService: SigningService, walletId: string): Promise<string>;
 }

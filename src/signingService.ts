@@ -22,12 +22,4 @@ export interface SigningService {
      * @returns {string} The signature in hex format.
      */
     sign(keyId: string, dataToSign: Buffer): string;
-
-    /**
-     * Signs all inputs of a PSBT for which the service holds the key.
-     * @param {bitcoin.Psbt} psbt The PSBT to sign.
-     * @param {string} keyId The ID of the key to use for signing.
-     * @returns {bitcoin.Psbt} The signed PSBT.
-     */
-    signPsbt(psbt: import('bitcoinjs-lib').Psbt, keyId: string): import('bitcoinjs-lib').Psbt;
 }

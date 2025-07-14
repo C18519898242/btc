@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Balance, Provider, InputTransaction } from './provider';
+import { SigningService } from '../signingService';
 import logger from '../logger';
 import * as bitcoin from 'bitcoinjs-lib';
 import * as ecc from 'tiny-secp256k1';
@@ -109,7 +110,20 @@ export class MempoolProvider implements Provider {
         return psbt;
     }
 
-    async sendTx(txHex: string): Promise<string> {
+    async sendTx(psbt: bitcoin.Psbt, signingService: SigningService, walletId: string): Promise<string> {
+        const pubkeyHex = signingService.getPublicKey(walletId);
+        const signer = {
+            publicKey: Buffer.from(pubkeyHex, 'hex'),
+            sign: (hash: Buffer): Buffer => {
+                const signatureHex = signingService.sign(walletId, hash);
+                return Buffer.from(signatureHex, 'hex');
+            },
+        };
+
+        psbt.signAllInputs(signer);
+        psbt.finalizeAllInputs();
+
+        const txHex = psbt.extractTransaction().toHex();
         const { data: txid } = await axios.post(`${this.apiUrl}/tx`, txHex);
         return txid;
     }

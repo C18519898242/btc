@@ -81,12 +81,7 @@ async function main() {
                 }
 
                 const signingService = new MockSigningService();
-                const signedPsbt = signingService.signPsbt(psbt, sourceWallet.id);
-                
-                signedPsbt.finalizeAllInputs();
-                
-                const txHex = signedPsbt.extractTransaction().toHex();
-                const txid = await provider.sendTx(txHex);
+                const txid = await provider.sendTx(psbt, signingService, sourceWallet.id);
                 logger.info(`Transaction sent! TXID: ${txid}`);
             } catch (error) {
                 logger.error('Error sending transaction:', error);

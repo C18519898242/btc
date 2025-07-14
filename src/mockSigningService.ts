@@ -78,23 +78,7 @@ export class MockSigningService implements SigningService {
             throw new Error('Key ID not found');
         }
         const signature = keyPair.sign(dataToSign);
-        return bitcoin.script.signature.encode(Buffer.from(signature), bitcoin.Transaction.SIGHASH_ALL).toString('hex');
-    }
-
-    public signPsbt(psbt: bitcoin.Psbt, keyId: string): bitcoin.Psbt {
-        const keyPair = this.keyPairs.get(keyId);
-        if (!keyPair) {
-            throw new Error(`Key ID not found for signing PSBT: ${keyId}`);
-        }
-
-        const signer = {
-            publicKey: Buffer.from(keyPair.publicKey),
-            sign: (hash: Buffer): Buffer => {
-                return Buffer.from(keyPair.sign(hash));
-            },
-        };
-
-        psbt.signAllInputs(signer);
-        return psbt;
+        // The raw signature is returned, the caller is responsible for encoding it correctly
+        return Buffer.from(signature).toString('hex');
     }
 }
