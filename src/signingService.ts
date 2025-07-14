@@ -14,8 +14,8 @@ export class SigningService {
     private keyPairs: Map<string, ECPairInterface>;
     private readonly filePath: string;
 
-    constructor(filePath: string = 'keys.json') {
-        this.filePath = filePath;
+    constructor() {
+        this.filePath = 'keys.json';
         this.keyPairs = new Map<string, ECPairInterface>();
         this.loadKeyPairs();
     }

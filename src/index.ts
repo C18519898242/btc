@@ -69,7 +69,7 @@ async function main() {
         case 'test-signer':
             {
                 logger.info('Testing SigningService...');
-                const signingService = new SigningService('keys.json');
+                const signingService = new SigningService();
                 const keyId = signingService.createPrivateKey();
                 logger.info(`Created key with ID: ${keyId}`);
                 const publicKey = signingService.getPublicKey(keyId);
