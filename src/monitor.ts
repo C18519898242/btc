@@ -7,6 +7,7 @@ import { MempoolProvider } from './providers/mempool';
 import { BlockstreamProvider } from './providers/blockstream';
 
 interface Wallet {
+    id: string;
     address: string;
     privateKey: string;
     publicKey: string;
