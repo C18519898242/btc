@@ -8,9 +8,35 @@ import logger from './logger';
 const ECPair = ECPairFactory(ecc);
 
 /**
- * Manages cryptographic keys and signing operations, with persistence.
+ * Defines the interface for a signing service.
  */
-export class SigningService {
+export interface SigningService {
+    /**
+     * Creates a new private key and stores it, returning a unique ID for the key.
+     * @returns {string} The unique ID for the newly created key.
+     */
+    createPrivateKey(): string;
+
+    /**
+     * Retrieves the public key associated with the given key ID.
+     * @param {string} keyId The unique ID of the key.
+     * @returns {string} The public key in hex format.
+     */
+    getPublicKey(keyId: string): string;
+
+    /**
+     * Signs a data hash using the private key associated with the given key ID.
+     * @param {string} keyId The unique ID of the key.
+     * @param {Buffer} dataToSign The data (hash) to be signed.
+     * @returns {string} The signature in hex format.
+     */
+    sign(keyId: string, dataToSign: Buffer): string;
+}
+
+/**
+ * A mock implementation of the SigningService that persists keys to a local JSON file.
+ */
+export class MockSigningService implements SigningService {
     private keyPairs: Map<string, ECPairInterface>;
     private readonly filePath: string;
 
@@ -20,9 +46,6 @@ export class SigningService {
         this.loadKeyPairs();
     }
 
-    /**
-     * Loads key pairs from the JSON file.
-     */
     private loadKeyPairs(): void {
         try {
             if (fs.existsSync(this.filePath)) {
@@ -44,9 +67,6 @@ export class SigningService {
         }
     }
 
-    /**
-     * Saves the current key pairs to the JSON file.
-     */
     private saveKeyPairs(): void {
         try {
             const keyPairsWIF: { [keyId: string]: string } = {};
@@ -60,10 +80,6 @@ export class SigningService {
         }
     }
 
-    /**
-     * Creates a new private key, stores it, and saves it to the file.
-     * @returns {string} The unique ID for the newly created key.
-     */
     public createPrivateKey(): string {
         const keyPair = ECPair.makeRandom();
         const keyId = uuidv4();
@@ -73,28 +89,14 @@ export class SigningService {
         return keyId;
     }
 
-    /**
-     * Retrieves the public key associated with the given key ID.
-     * @param {string} keyId The unique ID of the key.
-     * @returns {string} The public key in hex format.
-     * @throws {Error} If the key ID is not found.
-     */
     public getPublicKey(keyId: string): string {
         const keyPair = this.keyPairs.get(keyId);
         if (!keyPair) {
             throw new Error('Key ID not found');
         }
-        // Manual buffer to hex conversion to bypass potential toString override issues
         return keyPair.publicKey.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
     }
 
-    /**
-     * Signs a data hash using the private key associated with the given key ID.
-     * @param {string} keyId The unique ID of the key.
-     * @param {Buffer} dataToSign The data (hash) to be signed.
-     * @returns {string} The signature in hex format.
-     * @throws {Error} If the key ID is not found.
-     */
     public sign(keyId: string, dataToSign: Buffer): string {
         const keyPair = this.keyPairs.get(keyId);
         if (!keyPair) {

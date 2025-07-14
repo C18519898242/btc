@@ -4,7 +4,7 @@ import { generateWallet } from './wallet';
 import { Provider, InputTransaction } from './providers/provider';
 import { MempoolProvider } from './providers/mempool';
 import { BlockstreamProvider } from './providers/blockstream';
-import { SigningService } from './signingService';
+import { SigningService, MockSigningService } from './signingService';
 import config from '../config.json';
 import * as fs from 'fs';
 import * as bitcoin from 'bitcoinjs-lib';
@@ -69,7 +69,7 @@ async function main() {
         case 'test-signer':
             {
                 logger.info('Testing SigningService...');
-                const signingService = new SigningService();
+                const signingService: SigningService = new MockSigningService();
                 const keyId = signingService.createPrivateKey();
                 logger.info(`Created key with ID: ${keyId}`);
                 const publicKey = signingService.getPublicKey(keyId);
