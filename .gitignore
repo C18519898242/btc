@@ -9,6 +9,7 @@ yarn-error.log*
 
 # Sensitive information
 /wallet.json
+/keys.json
 
 # Build output
 /dist
