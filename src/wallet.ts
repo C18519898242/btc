@@ -21,9 +21,8 @@ export function generateWallet(signingService: SigningService) {
     const { address } = bitcoin.payments.p2pkh({ pubkey: publicKeyBuffer, network });
 
     const wallet = {
-        id: uuidv4(),
+        id: keyId,
         network: networkName,
-        keyId: keyId,
         publicKey: publicKeyHex,
         address: address,
     };
