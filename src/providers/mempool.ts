@@ -32,6 +32,14 @@ function getWalletByAddress(address: string) {
     return wallets.find((w: any) => w.address === address);
 }
 
+function getWalletById(id: string) {
+    if (!fs.existsSync(walletPath)) {
+        throw new Error('wallet.json not found');
+    }
+    const wallets = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
+    return wallets.find((w: any) => w.id === id);
+}
+
 export class MempoolProvider implements Provider {
     private apiUrl: string;
 
@@ -64,16 +72,36 @@ export class MempoolProvider implements Provider {
         const networkName = config.network as keyof typeof config.networks;
         const network = networkName === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
 
-        const sourceWallet = getWalletByAddress(tx.sourceAccountKey);
+        // Find source wallet by ID
+        const sourceWallet = getWalletById(tx.sourceAccountKey);
         if (!sourceWallet) {
-            throw new Error(`Source wallet not found for address: ${tx.sourceAccountKey}`);
+            throw new Error(`Source wallet not found for ID: ${tx.sourceAccountKey}`);
+        }
+        const sourceAddress = sourceWallet.address;
+
+        // Determine destination address
+        let destinationAddress: string;
+        if (tx.destinationAccountType === 'VAULT_ACCOUNT') {
+            const destWallet = getWalletById(tx.destinationAccountKey);
+            if (!destWallet) {
+                throw new Error(`Destination wallet not found for ID: ${tx.destinationAccountKey}`);
+            }
+            destinationAddress = destWallet.address;
+        } else if (tx.destinationAccountType === 'ONE_TIME_ADDRESS') {
+            destinationAddress = tx.destinationAddress;
+        } else {
+            throw new Error(`Invalid destinationAccountType: ${tx.destinationAccountType}`);
         }
 
-        const { data: utxos } = await axios.get(`${this.apiUrl}/address/${tx.sourceAccountKey}/utxo`);
+        // Determine fee
+        const feeRates = { LOW: 5000, MEDIUM: 10000, HIGH: 15000 };
+        const fee = feeRates[tx.txFeeLevel as keyof typeof feeRates] || feeRates.MEDIUM;
+
+        // Fetch UTXOs for the source address
+        const { data: utxos } = await axios.get(`${this.apiUrl}/address/${sourceAddress}/utxo`);
 
         const psbt = new bitcoin.Psbt({ network });
         const amountToSend = Math.floor(parseFloat(tx.txAmount) * 100_000_000);
-        const fee = 10000;
         let totalInput = 0;
 
         for (const utxo of utxos) {
@@ -91,7 +119,7 @@ export class MempoolProvider implements Provider {
         }
 
         psbt.addOutput({
-            address: tx.destinationAddress,
+            address: destinationAddress,
             value: amountToSend,
         });
 
@@ -101,7 +129,7 @@ export class MempoolProvider implements Provider {
         }
         if (change > 0) {
             psbt.addOutput({
-                address: tx.sourceAccountKey,
+                address: sourceAddress,
                 value: change,
             });
         }

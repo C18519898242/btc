@@ -6,8 +6,8 @@
     "coinKey": "BTC",
     "txAmount": "0.0001",
     "txFeeLevel": "HIGH",
-    "sourceAccountKey": "mgayskgymR1pmnbPDTrnZPDyLNBom23Zut",
-    "destinationAccountKey": "some-dest-key",
-    "destinationAccountType": "WHITELISTING_ACCOUNT",
-    "destinationAddress": "n2q2rALe4sz6jvQe4U7VzT16M29Xd9LUDu"
+    "sourceAccountKey": "c7594483-b114-4d4f-8b6a-19d0a5a2cdb5",
+    "destinationAccountKey": "95105fcc-860a-44db-8935-5f678e4586d3",
+    "destinationAccountType": "VAULT_ACCOUNT",
+    "destinationAddress": "mwnzUFWcdyapR8B7tNrkt3tvGpAw68TUwX"
 }
