@@ -37,7 +37,7 @@ async function main() {
 
     switch (command) {
         case 'generate':
-            generateWallet();
+            generateWallet(new MockSigningService());
             break;
         case 'monitor':
             monitorWallets();

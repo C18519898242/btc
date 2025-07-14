@@ -1,29 +1,30 @@
 import * as bitcoin from 'bitcoinjs-lib';
-import * as ecc from 'tiny-secp256k1';
-import ECPairFactory from 'ecpair';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import logger from './logger';
 import config from '../config.json';
+import { SigningService } from './signingService';
 
-const ECPair = ECPairFactory(ecc);
 const walletPath = path.join(__dirname, '..', 'wallet.json');
 
-export function generateWallet() {
+export function generateWallet(signingService: SigningService) {
     const networkName = config.network;
     const network = networkName === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
 
     logger.info(`Generating new wallet for ${networkName}...`);
-    const keyPair = ECPair.makeRandom({ network });
-    const publicKeyBuffer = Buffer.from(keyPair.publicKey);
+
+    const keyId = signingService.createPrivateKey();
+    const publicKeyHex = signingService.getPublicKey(keyId);
+    const publicKeyBuffer = Buffer.from(publicKeyHex, 'hex');
+
     const { address } = bitcoin.payments.p2pkh({ pubkey: publicKeyBuffer, network });
 
     const wallet = {
         id: uuidv4(),
         network: networkName,
-        privateKey: keyPair.toWIF(),
-        publicKey: publicKeyBuffer.toString('hex'),
+        keyId: keyId,
+        publicKey: publicKeyHex,
         address: address,
     };
 
