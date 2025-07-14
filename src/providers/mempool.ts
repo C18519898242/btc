@@ -79,6 +79,12 @@ export class MempoolProvider implements Provider {
         }
         const sourceAddress = sourceWallet.address;
 
+        // Get and log balance
+        const balance = await this.getBalance(sourceAddress);
+        const amountToSend = Math.floor(parseFloat(tx.txAmount) * 100_000_000);
+        logger.info(`Source wallet ${sourceAddress} balance: ${balance.confirmed} satoshis.`);
+        logger.info(`Attempting to send: ${amountToSend} satoshis.`);
+
         // Determine destination address
         let destinationAddress: string;
         if (tx.destinationAccountType === 'VAULT_ACCOUNT') {
@@ -101,7 +107,6 @@ export class MempoolProvider implements Provider {
         const { data: utxos } = await axios.get(`${this.apiUrl}/address/${sourceAddress}/utxo`);
 
         const psbt = new bitcoin.Psbt({ network });
-        const amountToSend = Math.floor(parseFloat(tx.txAmount) * 100_000_000);
         let totalInput = 0;
 
         for (const utxo of utxos) {
