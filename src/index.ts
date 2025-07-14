@@ -88,21 +88,31 @@ async function main() {
             }
             break;
         case 'test-e2e-tx':
-            try {
-                logger.info('Running end-to-end transaction test...');
-                const txInput: InputTransaction = JSON.parse(fs.readFileSync('case/tx.json', 'utf-8'));
-                
-                // 1. Create Transaction
-                const psbt = await provider.createTransaction(txInput);
-                logger.info('PSBT created.');
+            {
+                const caseDir = 'case';
+                const files = fs.readdirSync(caseDir).filter(f => f.endsWith('.json'));
+                logger.info(`Found ${files.length} test cases in '${caseDir}' directory.`);
 
-                // 2. Sign and Send Transaction
-                const sourceWalletId = txInput.sourceAccountKey;
-                const signingService = new MockSigningService();
-                const txid = await provider.sendTx(psbt, signingService, sourceWalletId);
-                logger.info(`Transaction sent successfully! TXID: ${txid}`);
-            } catch (error) {
-                logger.error('End-to-end transaction test failed:', error);
+                for (const file of files) {
+                    const filePath = `${caseDir}/${file}`;
+                    logger.info(`--- Running test case: ${file} ---`);
+                    try {
+                        const txInput: InputTransaction = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+                        
+                        // 1. Create Transaction
+                        const psbt = await provider.createTransaction(txInput);
+                        logger.info('PSBT created.');
+
+                        // 2. Sign and Send Transaction
+                        const sourceWalletId = txInput.sourceAccountKey;
+                        const signingService = new MockSigningService();
+                        const txid = await provider.sendTx(psbt, signingService, sourceWalletId);
+                        logger.info(`Transaction sent successfully! TXID: ${txid}`);
+                        logger.info(`--- Test case ${file} PASSED ---`);
+                    } catch (error) {
+                        logger.error(`--- Test case ${file} FAILED:`, error);
+                    }
+                }
             }
             break;
         case 'test-signer':
