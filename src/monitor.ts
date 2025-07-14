@@ -54,35 +54,40 @@ async function getBalance(address: string): Promise<Balance> {
 
 export async function monitorWallets() {
     logger.info(`Starting to monitor wallets on ${config.network}...`);
-    if (!fs.existsSync(walletPath)) {
-        logger.warn('wallet.json file not found. Please generate a wallet first.');
-        return;
-    }
 
-    const allWallets: Wallet[] = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
-    if (!Array.isArray(allWallets) || allWallets.length === 0) {
-        logger.warn('No wallets found in wallet.json.');
-        return;
-    }
-
-    // Filter wallets based on the current network
-    const walletsToMonitor = allWallets.filter(w => w.network === config.network);
-
-    if (walletsToMonitor.length === 0) {
-        logger.warn(`No wallets found for the ${config.network} network in wallet.json.`);
-        return;
-    }
-
-    logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
-
-    for (const wallet of walletsToMonitor) {
-        try {
-            const balance = await getBalance(wallet.address);
-            const btcBalance = balance.confirmed / 100_000_000;
-            const pendingBtc = balance.unconfirmed / 100_000_000;
-            logger.info(`Address: ${wallet.address} | Balance: ${balance.confirmed} satoshis (${btcBalance.toFixed(8)} BTC) | Pending: ${balance.unconfirmed} satoshis (${pendingBtc.toFixed(8)} BTC)`);
-        } catch (error) {
-            // Error is already logged in getBalance
+    const monitor = async () => {
+        if (!fs.existsSync(walletPath)) {
+            logger.warn('wallet.json file not found. Please generate a wallet first.');
+            return;
         }
-    }
+
+        const allWallets: Wallet[] = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
+        if (!Array.isArray(allWallets) || allWallets.length === 0) {
+            logger.warn('No wallets found in wallet.json.');
+            return;
+        }
+
+        const walletsToMonitor = allWallets.filter(w => w.network === config.network);
+
+        if (walletsToMonitor.length === 0) {
+            logger.warn(`No wallets found for the ${config.network} network in wallet.json.`);
+            return;
+        }
+
+        logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
+
+        for (const wallet of walletsToMonitor) {
+            try {
+                const balance = await getBalance(wallet.address);
+                const btcBalance = balance.confirmed / 100_000_000;
+                logger.info(`Address: ${wallet.address} | Current Balance: ${btcBalance.toFixed(8)} BTC`);
+            } catch (error) {
+                // Error is already logged in getBalance
+            }
+        }
+    };
+
+    // Run immediately and then every minute
+    monitor();
+    setInterval(monitor, 60 * 1000);
 }
