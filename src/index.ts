@@ -6,6 +6,7 @@ import { MempoolProvider } from './providers/mempool';
 import { BlockstreamProvider } from './providers/blockstream';
 import config from '../config.json';
 import * as fs from 'fs';
+import * as bitcoin from 'bitcoinjs-lib';
 
 function getProvider(): Provider {
     const networkName = config.network as keyof typeof config.networks;
@@ -48,13 +49,30 @@ async function main() {
                 logger.error('Error creating transaction:', error);
             }
             break;
+        case 'send-tx':
+            try {
+                const psbtBase64 = fs.readFileSync(0, 'utf-8').trim();
+                const psbt = bitcoin.Psbt.fromBase64(psbtBase64);
+                const address = (psbt.txInputs[0] as any).witnessUtxo.script.toString('hex'); // A bit of a hack to get the address
+                const wallets = JSON.parse(fs.readFileSync('wallet.json', 'utf-8'));
+                const sourceWallet = wallets.find((w: any) => w.address === address);
+                if (!sourceWallet) {
+                    throw new Error(`Wallet not found for address: ${address}`);
+                }
+                const txid = await provider.sendTx(psbt, sourceWallet.privateKey);
+                logger.info(`Transaction sent! TXID: ${txid}`);
+            } catch (error) {
+                logger.error('Error sending transaction:', error);
+            }
+            break;
         default:
-            logger.info('Invalid command. Available commands: generate, monitor, create-tx');
+            logger.info('Invalid command. Available commands: generate, monitor, create-tx, send-tx');
             logger.info('Usage: npm start <command>');
             logger.info('Examples:');
             logger.info('  npm start generate   # Generate a new wallet');
             logger.info('  npm start monitor    # Monitor balances of all wallets');
             logger.info('  cat tx.json | npm start create-tx # Create a new transaction from a json file');
+            logger.info('  cat psbt.txt | npm start send-tx # Sign and send a transaction');
     }
 }
 

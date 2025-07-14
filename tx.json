@@ -1,13 +1,13 @@
 {
-    "customerRefId": "test-tx-001",
+    "customerRefId": "test-tx-002",
     "customerExt1": "",
     "customerExt2": "",
     "note": "Test transaction",
     "coinKey": "BTC",
     "txAmount": "0.0001",
     "txFeeLevel": "HIGH",
-    "sourceAccountKey": "n2q2rALe4sz6jvQe4U7VzT16M29Xd9LUDu",
+    "sourceAccountKey": "mgayskgymR1pmnbPDTrnZPDyLNBom23Zut",
     "destinationAccountKey": "some-dest-key",
     "destinationAccountType": "WHITELISTING_ACCOUNT",
-    "destinationAddress": "mwnzUFWcdyapR8B7tNrkt3tvGpAw68TUwX"
+    "destinationAddress": "n2q2rALe4sz6jvQe4U7VzT16M29Xd9LUDu"
 }

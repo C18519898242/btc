@@ -22,4 +22,5 @@ export interface InputTransaction {
 export interface Provider {
     getBalance(address: string): Promise<Balance>;
     createTransaction(tx: InputTransaction): Promise<bitcoin.Psbt>;
+    sendTx(psbt: bitcoin.Psbt, privateKey: string): Promise<string>;
 }
