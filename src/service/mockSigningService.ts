@@ -1,48 +1,105 @@
-import { ECPairFactory } from 'ecpair';
 import * as ecc from 'tiny-secp256k1';
-import { payments, Network } from 'bitcoinjs-lib';
+import ECPairFactory, { ECPairInterface } from 'ecpair';
+import { v4 as uuidv4 } from 'uuid';
+import * as bitcoin from 'bitcoinjs-lib';
+import * as fs from 'fs';
+import logger from './logger';
 import { SigningService } from './signingService';
 
 const ECPair = ECPairFactory(ecc);
 
+/**
+ * A mock implementation of the SigningService that persists keys to a local JSON file.
+ */
 export class MockSigningService implements SigningService {
-    private keys: Map<string, string> = new Map();
+    private keyPairs: Map<string, ECPairInterface>;
+    private readonly filePath: string;
 
-    createPrivateKey(): string {
+    constructor() {
+        this.filePath = 'keys.json';
+        this.keyPairs = new Map<string, ECPairInterface>();
+        this.loadKeyPairs();
+    }
+
+    private loadKeyPairs(): void {
+        try {
+            if (!fs.existsSync(this.filePath)) {
+                return;
+            }
+            const data = fs.readFileSync(this.filePath, 'utf-8');
+            if (!data) {
+                return;
+            }
+
+            const keyPairsWIF = JSON.parse(data);
+            const possibleNetworks = [bitcoin.networks.bitcoin, bitcoin.networks.testnet];
+
+            for (const keyId in keyPairsWIF) {
+                if (Object.prototype.hasOwnProperty.call(keyPairsWIF, keyId)) {
+                    const wif = keyPairsWIF[keyId];
+                    let keyPair: ECPairInterface | null = null;
+                    
+                    for (const network of possibleNetworks) {
+                        try {
+                            keyPair = ECPair.fromWIF(wif, network);
+                            // Success, break the loop
+                            break;
+                        } catch (e) {
+                            // Ignore error, try next network
+                        }
+                    }
+
+                    if (keyPair) {
+                        this.keyPairs.set(keyId, keyPair);
+                    } else {
+                        logger.warn(`Could not determine network for WIF associated with keyId ${keyId}. Skipping.`);
+                    }
+                }
+            }
+            logger.info(`Loaded ${this.keyPairs.size} keys from ${this.filePath}`);
+
+        } catch (error) {
+            logger.error(`Error loading key pairs from ${this.filePath}:`, error);
+        }
+    }
+
+    private saveKeyPairs(): void {
+        try {
+            const keyPairsWIF: { [keyId: string]: string } = {};
+            this.keyPairs.forEach((keyPair, keyId) => {
+                keyPairsWIF[keyId] = keyPair.toWIF();
+            });
+            fs.writeFileSync(this.filePath, JSON.stringify(keyPairsWIF, null, 4));
+            logger.info(`Saved ${this.keyPairs.size} keys to ${this.filePath}`);
+        } catch (error) {
+            logger.error(`Error saving key pairs to ${this.filePath}:`, error);
+        }
+    }
+
+    public createPrivateKey(): string {
         const keyPair = ECPair.makeRandom();
-        const keyId = keyPair.publicKey.toString('hex');
-        this.keys.set(keyId, keyPair.toWIF());
+        const keyId = uuidv4();
+        this.keyPairs.set(keyId, keyPair);
+        logger.info(`Private key created with ID: ${keyId}`);
+        this.saveKeyPairs();
         return keyId;
     }
 
-    getPublicKey(keyId: string): string {
-        const wif = this.keys.get(keyId);
-        if (!wif) {
-            throw new Error('Key not found');
+    public getPublicKey(keyId: string): string {
+        const keyPair = this.keyPairs.get(keyId);
+        if (!keyPair) {
+            throw new Error('Key ID not found');
         }
-        const keyPair = ECPair.fromWIF(wif);
-        return keyPair.publicKey.toString('hex');
+        return keyPair.publicKey.reduce((str, byte) => str + byte.toString(16).padStart(2, '0'), '');
     }
 
-    sign(keyId: string, dataToSign: Buffer): string {
-        const wif = this.keys.get(keyId);
-        if (!wif) {
-            throw new Error('Key not found');
+    public sign(keyId: string, dataToSign: Buffer): string {
+        const keyPair = this.keyPairs.get(keyId);
+        if (!keyPair) {
+            throw new Error('Key ID not found');
         }
-        const keyPair = ECPair.fromWIF(wif);
-        return keyPair.sign(dataToSign).toString('hex');
-    }
-
-    getAddress(keyId: string, network: Network): string {
-        const wif = this.keys.get(keyId);
-        if (!wif) {
-            throw new Error('Key not found');
-        }
-        const keyPair = ECPair.fromWIF(wif);
-        const { address } = payments.p2pkh({ pubkey: Buffer.from(keyPair.publicKey), network });
-        if (!address) {
-            throw new Error('Could not generate address');
-        }
-        return address;
+        const signature = keyPair.sign(dataToSign);
+        // The raw signature is returned, the caller is responsible for encoding it correctly
+        return Buffer.from(signature).toString('hex');
     }
 }

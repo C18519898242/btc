@@ -1,5 +1,3 @@
-import { Network } from 'bitcoinjs-lib';
-
 /**
  * Defines the interface for a signing service.
  */
@@ -24,12 +22,4 @@ export interface SigningService {
      * @returns {string} The signature in hex format.
      */
     sign(keyId: string, dataToSign: Buffer): string;
-
-    /**
-     * Gets the P2PKH address for a given key and network.
-     * @param keyId The private key in WIF format.
-     * @param network The network (mainnet or testnet).
-     * @returns The P2PKH address.
-     */
-    getAddress(keyId: string, network: Network): string;
 }

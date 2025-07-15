@@ -3,7 +3,7 @@ import { Api } from './api/api';
 import { Wallet } from './wallet';
 import logger from './logger';
 import config from '../config.json';
-import { SigningService } from './signingService';
+import { SigningService } from './service/signingService';
 
 export interface InputTransaction {
     customerRefId: string;
