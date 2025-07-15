@@ -3,13 +3,18 @@ import axios from 'axios';
 
 export class BtcNodeApi implements Api {
     private apiUrl: string;
+    private walletPath: string = '/wallet/HotWallet';
 
     constructor(apiUrl: string) {
         this.apiUrl = apiUrl;
     }
 
+    private getWalletUrl(): string {
+        return `${this.apiUrl.replace(/\/$/, '')}${this.walletPath}`;
+    }
+
     async getUtxos(address: string): Promise<Utxo[]> {
-        const response = await axios.post(this.apiUrl, {
+        const response = await axios.post(this.getWalletUrl(), {
             jsonrpc: '1.0',
             id: 'cline-btc-api',
             method: 'listunspent',
@@ -66,7 +71,7 @@ export class BtcNodeApi implements Api {
     }
 
     async importAddress(address: string, label: string = '', rescan: boolean = false): Promise<void> {
-        await axios.post(this.apiUrl, {
+        await axios.post(this.getWalletUrl(), {
             jsonrpc: '1.0',
             id: 'cline-btc-api',
             method: 'importaddress',
@@ -75,7 +80,7 @@ export class BtcNodeApi implements Api {
     }
 
     async rescanBlockchain(startHeight: number): Promise<void> {
-        await axios.post(this.apiUrl, {
+        await axios.post(this.getWalletUrl(), {
             jsonrpc: '1.0',
             id: 'cline-btc-api',
             method: 'rescanblockchain',
