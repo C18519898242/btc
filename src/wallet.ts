@@ -4,16 +4,31 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { v4 as uuidv4 } from 'uuid';
 import { Api } from './api/api';
 import { SigningService } from './service/signingService';
+import { MockSigningService } from './service/mockSigningService';
 
 const walletPath = path.join(__dirname, '..', 'wallet.json');
+
+type WalletInfo = {
+    id: string;
+    address: string;
+    publicKey: string;
+    network: string;
+};
+
+type WalletCreatedCallback = (wallet: WalletInfo) => void;
 
 export class Wallet {
     private api: Api;
     private signingService: SigningService;
+    private onWalletCreatedCallbacks: WalletCreatedCallback[] = [];
 
-    constructor(api: Api, signingService: SigningService) {
+    constructor(api: Api) {
         this.api = api;
-        this.signingService = signingService;
+        this.signingService = new MockSigningService();
+    }
+
+    addWalletCreatedListener(callback: WalletCreatedCallback) {
+        this.onWalletCreatedCallbacks.push(callback);
     }
 
     createWallet(networkName: string) {
@@ -32,12 +47,16 @@ export class Wallet {
             throw new Error('Failed to generate address');
         }
 
-        return {
+        const newWallet: WalletInfo = {
             id: keyId,
             address,
             publicKey: publicKeyHex,
             network: networkName,
         };
+
+        this.onWalletCreatedCallbacks.forEach(callback => callback(newWallet));
+
+        return newWallet;
     }
 
     getWalletByAddress(address: string) {

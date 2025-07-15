@@ -25,8 +25,7 @@ async function main() {
         const networkConfig = config.networks[networkName];
         const mempoolUrl = (networkConfig as any).mempool.api_url;
         const api = new MempoolApi(mempoolUrl);
-        const signingService = new MockSigningService();
-        const wallet = new Wallet(api, signingService);
+        const wallet = new Wallet(api);
 
         let existingWallets: any[] = [];
         if (fs.existsSync(walletPath)) {
@@ -34,9 +33,12 @@ async function main() {
             existingWallets = JSON.parse(fileContent);
         }
 
-        for (let i = 0; i < count; i++) {
-            const newWallet = wallet.createWallet('testnet');
+        wallet.addWalletCreatedListener((newWallet) => {
             existingWallets.push(newWallet);
+        });
+
+        for (let i = 0; i < count; i++) {
+            wallet.createWallet('testnet');
         }
 
         fs.writeFileSync(walletPath, JSON.stringify(existingWallets, null, 2));
