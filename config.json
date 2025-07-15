@@ -8,6 +8,9 @@
             },
             "blockstream": {
                 "api_url": "https://blockstream.info/api"
+            },
+            "btc-node": {
+                "api_url": "http://129.150.42.37:8332"
             }
         },
         "testnet": {
@@ -19,6 +22,9 @@
             "mempool": {
                 "api_url": "https://mempool.space/testnet4/api",
                 "ws_url": "wss://mempool.space/testnet4/api/v1/ws"
+            },
+            "btc-node": {
+                "api_url": "http://129.150.42.37:18332"
             }
         }
     }

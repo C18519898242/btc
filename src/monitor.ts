@@ -5,6 +5,7 @@ import config from '../config.json';
 import { Wallet } from './wallet';
 import { MempoolApi } from './api/mempool';
 import { BlockstreamApi } from './api/blockstream';
+import { BtcNodeApi } from './api/btcNode';
 import { Api } from './api/api';
 import { MockSigningService } from './service/mockSigningService';
 
@@ -33,6 +34,8 @@ function getApi(): Api {
             return new MempoolApi(providerConfig.api_url, providerConfig.ws_url);
         case 'blockstream':
             return new BlockstreamApi(providerConfig.api_url);
+        case 'btc-node':
+            return new BtcNodeApi(providerConfig.api_url);
         default:
             throw new Error(`Unsupported API provider: ${config.api_provider}`);
     }
