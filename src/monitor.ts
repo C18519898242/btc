@@ -3,11 +3,8 @@ import * as path from 'path';
 import logger from './logger';
 import config from '../config.json';
 import { Wallet } from './wallet';
-import { MempoolApi } from './api/mempool';
-import { BlockstreamApi } from './api/blockstream';
-import { BtcNodeApi } from './api/btcNode';
+import { getApi } from './api';
 import { Api } from './api/api';
-import { MockSigningService } from './service/mockSigningService';
 
 interface WalletConfig {
     id: string;
@@ -18,28 +15,6 @@ interface WalletConfig {
 }
 
 const walletPath = path.join(__dirname, '..', 'wallet.json');
-
-function getApi(): Api {
-    const networkName = config.network as keyof typeof config.networks;
-    const networkConfig = config.networks[networkName];
-    const apiProvider = config.api_provider as keyof typeof networkConfig;
-    const providerConfig = (networkConfig as any)[apiProvider];
-
-    if (!providerConfig || !providerConfig.api_url) {
-        throw new Error(`API provider '${apiProvider}' is not configured for network '${networkName}' in config.json`);
-    }
-
-    switch (config.api_provider) {
-        case 'mempool':
-            return new MempoolApi(providerConfig.api_url, providerConfig.ws_url);
-        case 'blockstream':
-            return new BlockstreamApi(providerConfig.api_url);
-        case 'btc-node':
-            return new BtcNodeApi(providerConfig.api_url, providerConfig.username, providerConfig.password);
-        default:
-            throw new Error(`Unsupported API provider: ${config.api_provider}`);
-    }
-}
 
 export async function monitorWallets() {
     logger.info(`Starting to monitor on ${config.network}...`);

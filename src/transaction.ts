@@ -2,7 +2,6 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { Api } from './api/api';
 import { Wallet } from './wallet';
 import logger from './logger';
-import config from '../config.json';
 import { SigningService } from './service/signingService';
 
 export enum CoinKey {

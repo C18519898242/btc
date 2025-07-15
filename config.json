@@ -1,6 +1,6 @@
 {
     "network": "testnet4",
-    "api_provider": "mempool",
+    "api_provider": "btc-node",
     "networks": {
         "mainnet": {
             "mempool": {

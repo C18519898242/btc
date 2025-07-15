@@ -3,8 +3,7 @@ import * as path from 'path';
 import { monitorWallets } from './monitor';
 import { Wallet } from './wallet';
 import logger from './logger';
-import { MempoolApi } from './api/mempool';
-import { MockSigningService } from './service/mockSigningService';
+import { getApi } from './api';
 import config from '../config.json';
 
 const walletPath = path.join(__dirname, '..', 'wallet.json');
@@ -21,10 +20,7 @@ async function main() {
 
         logger.info(`Generating ${count} testnet wallets...`);
 
-        const networkName = config.network as keyof typeof config.networks;
-        const networkConfig = config.networks[networkName];
-        const mempoolUrl = (networkConfig as any).mempool.api_url;
-        const api = new MempoolApi(mempoolUrl);
+        const api = getApi();
         const wallet = new Wallet(api);
 
         let existingWallets: any[] = [];
