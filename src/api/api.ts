@@ -12,5 +12,6 @@ export interface Utxo {
 
 export interface Api {
     getUtxos(address: string): Promise<Utxo[]>;
+    getTxHex(txid: string): Promise<string>;
     sendTx(txHex: string): Promise<string>;
 }

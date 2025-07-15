@@ -24,6 +24,11 @@ export class MempoolApi implements Api {
         }
     }
 
+    async getTxHex(txid: string): Promise<string> {
+        const { data } = await axios.get(`${this.apiUrl}/tx/${txid}/hex`);
+        return data;
+    }
+
     async sendTx(txHex: string): Promise<string> {
         const { data: txid } = await axios.post(`${this.apiUrl}/tx`, txHex);
         return txid;
