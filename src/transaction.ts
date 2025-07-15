@@ -3,6 +3,7 @@ import { Api } from './api/api';
 import { Wallet } from './wallet';
 import logger from './logger';
 import config from '../config.json';
+import { SigningService } from './signingService';
 
 export interface InputTransaction {
     customerRefId: string;
@@ -21,10 +22,12 @@ export interface InputTransaction {
 export class Transaction {
     private api: Api;
     private wallet: Wallet;
+    private signingService: SigningService;
 
-    constructor(api: Api) {
+    constructor(api: Api, signingService: SigningService) {
         this.api = api;
         this.wallet = new Wallet(api);
+        this.signingService = signingService;
     }
 
     async create(tx: InputTransaction): Promise<bitcoin.Psbt> {
@@ -97,5 +100,22 @@ export class Transaction {
 
         logger.info('PSBT created successfully. Ready for signing.');
         return psbt;
+    }
+
+    async sendTx(psbt: bitcoin.Psbt, walletId: string): Promise<string> {
+        const pubkeyHex = this.signingService.getPublicKey(walletId);
+        const signer = {
+            publicKey: Buffer.from(pubkeyHex, 'hex'),
+            sign: (hash: Buffer): Buffer => {
+                const signatureHex = this.signingService.sign(walletId, hash);
+                return Buffer.from(signatureHex, 'hex');
+            },
+        };
+
+        psbt.signAllInputs(signer);
+        psbt.finalizeAllInputs();
+
+        const txHex = psbt.extractTransaction().toHex();
+        return this.api.sendTx(txHex);
     }
 }
