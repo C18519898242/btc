@@ -1,8 +1,10 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { Api } from './api/api';
+import { getApi } from './api';
 import { Wallet } from './wallet';
 import logger from './logger';
 import { SigningService } from './service/signingService';
+import { MockSigningService } from './service/mockSigningService';
 
 export enum CoinKey {
     BTC = 'BTC',
@@ -28,10 +30,10 @@ export class Transaction {
     private wallet: Wallet;
     private signingService: SigningService;
 
-    constructor(api: Api, signingService: SigningService) {
-        this.api = api;
+    constructor() {
+        this.api = getApi();
         this.wallet = new Wallet();
-        this.signingService = signingService;
+        this.signingService = new MockSigningService();
     }
 
     async create(tx: InputTransaction): Promise<bitcoin.Psbt> {

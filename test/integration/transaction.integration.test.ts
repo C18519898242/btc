@@ -24,7 +24,7 @@ describe('Transaction Integration Tests', () => {
         // but we don't have access to a real HSM. MockSigningService correctly implements the signing.
         signingService = new MockSigningService();
         wallet = new Wallet();
-        transaction = new Transaction(api, signingService);
+        transaction = new Transaction();
     });
 
     // Test case for sending to a one-time address
