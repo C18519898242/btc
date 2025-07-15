@@ -6,11 +6,12 @@ import { Wallet } from './wallet';
 import { MempoolApi } from './api/mempool';
 import { BlockstreamApi } from './api/blockstream';
 import { Api } from './api/api';
+import { MockSigningService } from './service/mockSigningService';
 
 interface WalletConfig {
     id: string;
     address: string;
-    privateKey: string;
+    keyId: string;
     publicKey: string;
     network: string;
 }
@@ -72,7 +73,8 @@ export async function monitorWallets() {
 
                 logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
 
-                const wallet = new Wallet(api);
+                const signingService = new MockSigningService();
+                const wallet = new Wallet(api, signingService);
                 for (const walletConfig of walletsToMonitor) {
                     try {
                         const balance = await wallet.getBalance(walletConfig.address);

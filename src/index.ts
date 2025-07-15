@@ -3,6 +3,9 @@ import * as path from 'path';
 import { monitorWallets } from './monitor';
 import { Wallet } from './wallet';
 import logger from './logger';
+import { MempoolApi } from './api/mempool';
+import { MockSigningService } from './service/mockSigningService';
+import config from '../config.json';
 
 const walletPath = path.join(__dirname, '..', 'wallet.json');
 
@@ -18,6 +21,13 @@ async function main() {
 
         logger.info(`Generating ${count} testnet wallets...`);
 
+        const networkName = config.network as keyof typeof config.networks;
+        const networkConfig = config.networks[networkName];
+        const mempoolUrl = (networkConfig as any).mempool.api_url;
+        const api = new MempoolApi(mempoolUrl);
+        const signingService = new MockSigningService();
+        const wallet = new Wallet(api, signingService);
+
         let existingWallets: any[] = [];
         if (fs.existsSync(walletPath)) {
             const fileContent = fs.readFileSync(walletPath, 'utf-8');
@@ -25,7 +35,7 @@ async function main() {
         }
 
         for (let i = 0; i < count; i++) {
-            const newWallet = Wallet.createWallet('testnet');
+            const newWallet = wallet.createWallet('testnet');
             existingWallets.push(newWallet);
         }
 

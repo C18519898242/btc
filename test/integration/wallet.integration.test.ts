@@ -1,6 +1,7 @@
 import { Wallet } from '../../src/wallet';
 import { MempoolApi } from '../../src/api/mempool';
 import { BlockstreamApi } from '../../src/api/blockstream';
+import { MockSigningService } from '../../src/service/mockSigningService';
 import config from '../../config.json';
 
 const TEST_ADDRESS = 'mwnzUFWcdyapR8B7tNrkt3tvGpAw68TUwX';
@@ -18,7 +19,8 @@ describe('Wallet Integration Tests', () => {
 
             beforeAll(() => {
                 const api = new MempoolApi(networkConfig.mempool.api_url);
-                wallet = new Wallet(api);
+                const signingService = new MockSigningService();
+                wallet = new Wallet(api, signingService);
             });
 
             it('should fetch a real balance for a testnet address', async () => {
@@ -41,7 +43,8 @@ describe('Wallet Integration Tests', () => {
 
             beforeAll(() => {
                 const api = new BlockstreamApi(networkConfig.blockstream.api_url);
-                wallet = new Wallet(api);
+                const signingService = new MockSigningService();
+                wallet = new Wallet(api, signingService);
             });
 
             it('should fetch a real balance for a testnet address', async () => {
