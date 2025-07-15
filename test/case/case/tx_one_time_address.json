@@ -4,7 +4,7 @@
     "customerExt2": "",
     "note": "Test transaction (One Time Address)",
     "coinKey": "BTC",
-    "txAmount": "0.00005",
+    "txAmount": "0.00001",
     "txFeeLevel": "MEDIUM",
     "sourceAccountKey": "c7594483-b114-4d4f-8b6a-19d0a5a2cdb5",
     "destinationAccountKey": "",

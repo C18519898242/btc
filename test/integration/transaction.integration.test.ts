@@ -57,7 +57,7 @@ describe('Transaction Integration Tests', () => {
     }, 60000); // 60-second timeout for network requests
 
     // Test case for sending to a vault account
-    test.skip(`[${vaultAccountCase.customerRefId}] ${vaultAccountCase.note}`, async () => {
+    test(`[${vaultAccountCase.customerRefId}] ${vaultAccountCase.note}`, async () => {
         const txInput: InputTransaction = vaultAccountCase;
 
         console.log(`Using source wallet: ${txInput.sourceAccountKey}`);
