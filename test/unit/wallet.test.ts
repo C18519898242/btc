@@ -1,8 +1,9 @@
 import { Wallet } from '../../src/wallet';
 import { Api, Balance, Utxo } from '../../src/api/api';
 
-// Mock the Api class
-jest.mock('../../src/api/api');
+// Mock the getApi function
+import { getApi } from '../../src/api';
+jest.mock('../../src/api');
 
 describe('Wallet', () => {
     let wallet: Wallet;
@@ -17,7 +18,8 @@ describe('Wallet', () => {
             getBlockHeight: jest.fn(),
             importWallet: jest.fn(),
         } as jest.Mocked<Api>;
-        wallet = new Wallet(mockApi);
+        (getApi as jest.Mock).mockReturnValue(mockApi);
+        wallet = new Wallet();
     });
 
     describe('getBalance', () => {

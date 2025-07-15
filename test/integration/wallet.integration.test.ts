@@ -12,7 +12,7 @@ describe('Wallet Integration Tests', () => {
 
     beforeAll(() => {
         api = getApi();
-        wallet = new Wallet(api);
+        wallet = new Wallet();
     });
 
     it.skip('should fetch a real balance for a testnet address', async () => {

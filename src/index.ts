@@ -20,8 +20,7 @@ async function main() {
 
         logger.info(`Generating ${count} testnet wallets...`);
 
-        const api = getApi();
-        const wallet = new Wallet(api);
+        const wallet = new Wallet();
 
         let existingWallets: any[] = [];
         if (fs.existsSync(walletPath)) {

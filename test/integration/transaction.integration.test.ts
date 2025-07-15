@@ -23,7 +23,7 @@ describe('Transaction Integration Tests', () => {
         // We use MockSigningService because the actual signing logic is what we want to test,
         // but we don't have access to a real HSM. MockSigningService correctly implements the signing.
         signingService = new MockSigningService();
-        wallet = new Wallet(api);
+        wallet = new Wallet();
         transaction = new Transaction(api, signingService);
     });
 

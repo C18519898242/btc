@@ -4,6 +4,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import { v4 as uuidv4 } from 'uuid';
 import { EventEmitter } from 'events';
 import { Api } from './api/api';
+import { getApi } from './api';
 import { SigningService } from './service/signingService';
 import { MockSigningService } from './service/mockSigningService';
 
@@ -20,9 +21,9 @@ export class Wallet extends EventEmitter {
     private api: Api;
     private signingService: SigningService;
 
-    constructor(api: Api) {
+    constructor() {
         super();
-        this.api = api;
+        this.api = getApi();
         this.signingService = new MockSigningService();
     }
 

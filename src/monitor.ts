@@ -51,7 +51,7 @@ export async function monitorWallets() {
 
                 logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
 
-                const wallet = new Wallet(api);
+                const wallet = new Wallet();
                 for (const walletConfig of walletsToMonitor) {
                     try {
                         const balance = await wallet.getBalance(walletConfig.address);

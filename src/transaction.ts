@@ -30,7 +30,7 @@ export class Transaction {
 
     constructor(api: Api, signingService: SigningService) {
         this.api = api;
-        this.wallet = new Wallet(api);
+        this.wallet = new Wallet();
         this.signingService = signingService;
     }
 
