@@ -41,81 +41,55 @@ export async function monitorWallets() {
     logger.info(`Starting to monitor on ${config.network}...`);
 
     const api = getApi();
+    let lastBlockHeight = 0;
 
-    if (api instanceof MempoolApi) {
-        if (!fs.existsSync(walletPath)) {
-            logger.warn('wallet.json file not found. Please generate a wallet first.');
-            return;
-        }
+    const monitor = async () => {
+        try {
+            const currentBlockHeight = await api.getBlockHeight();
+            logger.info(`Current block height: ${currentBlockHeight}, last recorded height: ${lastBlockHeight}`);
 
-        const allWallets: WalletConfig[] = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
-        if (!Array.isArray(allWallets) || allWallets.length === 0) {
-            logger.warn('No wallets found in wallet.json.');
-            return;
-        }
+            if (currentBlockHeight > lastBlockHeight) {
+                logger.info(`New block detected! Height: ${currentBlockHeight}. Checking wallet balances.`);
+                lastBlockHeight = currentBlockHeight;
 
-        const walletsToMonitor = allWallets.filter(w => w.network === config.network);
-
-        if (walletsToMonitor.length === 0) {
-            logger.warn(`No wallets found for the ${config.network} network in wallet.json.`);
-            return;
-        }
-
-        const addresses = walletsToMonitor.map(w => w.address);
-        logger.info(`Using Mempool WebSocket to monitor addresses: ${addresses.join(', ')}`);
-
-        api.monitorAddresses(addresses, (txs) => {
-            for (const address in txs) {
-                const { mempool, confirmed } = txs[address];
-                if (mempool.length > 0) {
-                    logger.info(`New mempool transactions for ${address}:`);
-                    mempool.forEach((tx: any) => logger.info(JSON.stringify(tx, null, 2)));
+                if (!fs.existsSync(walletPath)) {
+                    logger.warn('wallet.json file not found. Please generate a wallet first.');
+                    return;
                 }
-                if (confirmed.length > 0) {
-                    logger.info(`New confirmed transactions for ${address}:`);
-                    confirmed.forEach((tx: any) => logger.info(JSON.stringify(tx, null, 2)));
+
+                const allWallets: WalletConfig[] = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
+                if (!Array.isArray(allWallets) || allWallets.length === 0) {
+                    logger.warn('No wallets found in wallet.json.');
+                    return;
                 }
-            }
-        });
-    } else {
-        logger.warn('WebSocket monitoring is only supported for Mempool API provider.');
-        logger.info('Falling back to periodic wallet balance checks.');
-        // The existing balance monitoring logic can remain here as a fallback.
-        const monitor = async () => {
-            if (!fs.existsSync(walletPath)) {
-                logger.warn('wallet.json file not found. Please generate a wallet first.');
-                return;
-            }
 
-            const allWallets: WalletConfig[] = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
-            if (!Array.isArray(allWallets) || allWallets.length === 0) {
-                logger.warn('No wallets found in wallet.json.');
-                return;
-            }
+                const walletsToMonitor = allWallets.filter(w => w.network === config.network);
 
-            const walletsToMonitor = allWallets.filter(w => w.network === config.network);
+                if (walletsToMonitor.length === 0) {
+                    logger.warn(`No wallets found for the ${config.network} network in wallet.json.`);
+                    return;
+                }
 
-            if (walletsToMonitor.length === 0) {
-                logger.warn(`No wallets found for the ${config.network} network in wallet.json.`);
-                return;
-            }
+                logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
 
-            logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
-
-            const wallet = new Wallet(api);
-            for (const walletConfig of walletsToMonitor) {
-                try {
-                    const balance = await wallet.getBalance(walletConfig.address);
-                    const btcBalance = balance.confirmed / 100_000_000;
-                    const pendingBtc = balance.unconfirmed / 100_000_000;
-                    logger.info(`Address: ${walletConfig.address} | Current Balance: ${btcBalance.toFixed(8)} BTC | Pending: ${pendingBtc.toFixed(8)} BTC`);
-                } catch (error) {
-                    logger.error(`Error fetching balance for wallet ${walletConfig.address}:`, error);
+                const wallet = new Wallet(api);
+                for (const walletConfig of walletsToMonitor) {
+                    try {
+                        const balance = await wallet.getBalance(walletConfig.address);
+                        const btcBalance = balance.confirmed / 100_000_000;
+                        const pendingBtc = balance.unconfirmed / 100_000_000;
+                        logger.info(`Address: ${walletConfig.address} | Current Balance: ${btcBalance.toFixed(8)} BTC | Pending: ${pendingBtc.toFixed(8)} BTC`);
+                    } catch (error) {
+                        logger.error(`Error fetching balance for wallet ${walletConfig.address}:`, error);
+                    }
                 }
             }
-        };
+        } catch (error) {
+            logger.error('Error during monitoring cycle:', error);
+        }
+    };
 
-        monitor();
-        setInterval(monitor, 60 * 1000);
-    }
+    // Run once immediately and then set interval
+    monitor();
+    setInterval(monitor, 60 * 1000);
 }

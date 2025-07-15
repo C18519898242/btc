@@ -37,6 +37,11 @@ export class MempoolApi implements Api {
         return txid;
     }
 
+    async getBlockHeight(): Promise<number> {
+        const { data } = await axios.get(`${this.apiUrl}/blocks/tip/height`);
+        return data;
+    }
+
     monitorTxs(onTx: (txids: string[]) => void) {
         const url = this.wsUrl || `wss://${this.apiUrl.split('//')[1].replace('/api', '/ws')}`;
         const ws = new WebSocket(url);

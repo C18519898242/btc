@@ -38,4 +38,9 @@ export class BlockstreamApi implements Api {
         const { data: txid } = await axios.post(`${this.apiUrl}/tx`, txHex);
         return txid;
     }
+
+    async getBlockHeight(): Promise<number> {
+        const { data } = await axios.get(`${this.apiUrl}/blocks/tip/height`);
+        return data;
+    }
 }
