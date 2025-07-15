@@ -10,6 +10,11 @@ export interface Utxo {
     value: number;
 }
 
+export interface Balance {
+    confirmed: number;
+    unconfirmed: number;
+}
+
 export interface Api {
     getUtxos(address: string): Promise<Utxo[]>;
     getTxHex(txid: string): Promise<string>;

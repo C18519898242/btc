@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
+        "test": "jest",
         "start": "ts-node src/index.ts",
         "generate": "ts-node src/index.ts generate",
         "monitor": "ts-node src/index.ts monitor"
@@ -13,8 +13,11 @@
     "author": "",
     "license": "ISC",
     "devDependencies": {
+        "@types/jest": "^30.0.0",
         "@types/node": "^24.0.13",
         "@types/uuid": "^10.0.0",
+        "jest": "^30.0.4",
+        "ts-jest": "^29.4.0",
         "ts-node": "^10.9.2",
         "typescript": "^5.8.3"
     },
