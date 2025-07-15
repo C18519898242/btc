@@ -29,7 +29,7 @@ async function main() {
             existingWallets = JSON.parse(fileContent);
         }
 
-        wallet.addWalletCreatedListener((newWallet) => {
+        wallet.on('walletCreated', (newWallet) => {
             existingWallets.push(newWallet);
         });
 
