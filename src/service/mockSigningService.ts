@@ -3,7 +3,7 @@ import ECPairFactory, { ECPairInterface } from 'ecpair';
 import { v4 as uuidv4 } from 'uuid';
 import * as bitcoin from 'bitcoinjs-lib';
 import * as fs from 'fs';
-import logger from './logger';
+import logger from '../logger';
 import { SigningService } from './signingService';
 
 const ECPair = ECPairFactory(ecc);
@@ -38,7 +38,7 @@ export class MockSigningService implements SigningService {
                 if (Object.prototype.hasOwnProperty.call(keyPairsWIF, keyId)) {
                     const wif = keyPairsWIF[keyId];
                     let keyPair: ECPairInterface | null = null;
-                    
+
                     for (const network of possibleNetworks) {
                         try {
                             keyPair = ECPair.fromWIF(wif, network);
