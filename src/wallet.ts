@@ -2,9 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as bitcoin from 'bitcoinjs-lib';
 import { v4 as uuidv4 } from 'uuid';
-import { EventEmitter } from 'events';
 import { Api } from './api/api';
-import { getApi } from './api';
+import { getApi, getAllApis } from './api';
 import { SigningService } from './service/signingService';
 import { MockSigningService } from './service/mockSigningService';
 
@@ -17,17 +16,16 @@ export type WalletInfo = {
     network: string;
 };
 
-export class Wallet extends EventEmitter {
+export class Wallet {
     private api: Api;
     private signingService: SigningService;
 
     constructor() {
-        super();
         this.api = getApi();
         this.signingService = new MockSigningService();
     }
 
-    createWallet(networkName: string) {
+    async createWallet(networkName: string) {
         const network = (bitcoin.networks as any)[networkName];
         if (!network) {
             throw new Error(`Invalid network: ${networkName}`);
@@ -50,7 +48,10 @@ export class Wallet extends EventEmitter {
             network: networkName,
         };
 
-        this.emit('walletCreated', newWallet);
+        const apis = getAllApis();
+        for (const api of apis) {
+            await api.importWallet(newWallet.address);
+        }
 
         return newWallet;
     }

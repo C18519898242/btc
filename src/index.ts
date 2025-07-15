@@ -29,7 +29,8 @@ async function main() {
         }
 
         for (let i = 0; i < count; i++) {
-            wallet.createWallet('testnet');
+            const newWallet = await wallet.createWallet('testnet');
+            existingWallets.push(newWallet);
         }
 
         fs.writeFileSync(walletPath, JSON.stringify(existingWallets, null, 2));

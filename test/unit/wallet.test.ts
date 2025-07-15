@@ -1,16 +1,17 @@
 import { Wallet } from '../../src/wallet';
 import { Api, Balance, Utxo } from '../../src/api/api';
 
-// Mock the getApi function
-import { getApi } from '../../src/api';
+// Mock the getApi and getAllApis functions
+import { getApi, getAllApis } from '../../src/api';
 jest.mock('../../src/api');
 
 describe('Wallet', () => {
     let wallet: Wallet;
     let mockApi: jest.Mocked<Api>;
+    let mockApi2: jest.Mocked<Api>;
 
     beforeEach(() => {
-        // Create a new mock for each test
+        // Create new mocks for each test
         mockApi = {
             getUtxos: jest.fn(),
             getTxHex: jest.fn(),
@@ -18,7 +19,16 @@ describe('Wallet', () => {
             getBlockHeight: jest.fn(),
             importWallet: jest.fn(),
         } as jest.Mocked<Api>;
+        mockApi2 = {
+            getUtxos: jest.fn(),
+            getTxHex: jest.fn(),
+            sendTx: jest.fn(),
+            getBlockHeight: jest.fn(),
+            importWallet: jest.fn(),
+        } as jest.Mocked<Api>;
+
         (getApi as jest.Mock).mockReturnValue(mockApi);
+        (getAllApis as jest.Mock).mockReturnValue([mockApi, mockApi2]);
         wallet = new Wallet();
     });
 
@@ -59,5 +69,15 @@ describe('Wallet', () => {
         });
     });
 
-    // We can add more tests for other methods in Wallet class later
+    describe('createWallet', () => {
+        it('should create a wallet and import the address to all apis', async () => {
+            const networkName = 'testnet';
+            const newWallet = await wallet.createWallet(networkName);
+
+            expect(newWallet).toBeDefined();
+            expect(newWallet.network).toBe(networkName);
+            expect(mockApi.importWallet).toHaveBeenCalledWith(newWallet.address);
+            expect(mockApi2.importWallet).toHaveBeenCalledWith(newWallet.address);
+        });
+    });
 });

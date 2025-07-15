@@ -25,3 +25,28 @@ export function getApi(): Api {
             throw new Error(`Unsupported API provider: ${config.api_provider}`);
     }
 }
+
+export function getAllApis(): Api[] {
+    const networkName = config.network as keyof typeof config.networks;
+    const networkConfig = config.networks[networkName];
+    const apis: Api[] = [];
+
+    for (const providerName in networkConfig) {
+        const providerConfig = (networkConfig as any)[providerName];
+        if (providerConfig && providerConfig.api_url) {
+            switch (providerName) {
+                case 'mempool':
+                    apis.push(new MempoolApi(providerConfig.api_url, providerConfig.ws_url));
+                    break;
+                case 'blockstream':
+                    apis.push(new BlockstreamApi(providerConfig.api_url));
+                    break;
+                case 'btc-node':
+                    apis.push(new BtcNodeApi(providerConfig.api_url, providerConfig.username, providerConfig.password));
+                    break;
+            }
+        }
+    }
+
+    return apis;
+}
