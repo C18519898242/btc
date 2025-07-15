@@ -28,10 +28,6 @@ async function main() {
             existingWallets = JSON.parse(fileContent);
         }
 
-        wallet.on('walletCreated', (newWallet) => {
-            existingWallets.push(newWallet);
-        });
-
         for (let i = 0; i < count; i++) {
             wallet.createWallet('testnet');
         }
