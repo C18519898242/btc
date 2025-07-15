@@ -1,7 +1,7 @@
-import { Wallet } from './wallet';
-import { MempoolApi } from './api/mempool';
-import { BlockstreamApi } from './api/blockstream';
-import config from '../config.json';
+import { Wallet } from '../../src/wallet';
+import { MempoolApi } from '../../src/api/mempool';
+import { BlockstreamApi } from '../../src/api/blockstream';
+import config from '../../config.json';
 
 const TEST_ADDRESS = 'mwnzUFWcdyapR8B7tNrkt3tvGpAw68TUwX';
 

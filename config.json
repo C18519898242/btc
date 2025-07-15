@@ -17,7 +17,8 @@
         },
         "testnet4": {
             "mempool": {
-                "api_url": "https://mempool.space/testnet4/api"
+                "api_url": "https://mempool.space/testnet4/api",
+                "ws_url": "wss://mempool.space/testnet4/api/v1/ws"
             }
         }
     }

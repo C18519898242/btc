@@ -1,8 +1,8 @@
-import { Wallet } from './wallet';
-import { Api, Balance, Utxo } from './api/api';
+import { Wallet } from '../../src/wallet';
+import { Api, Balance, Utxo } from '../../src/api/api';
 
 // Mock the Api class
-jest.mock('./api/api');
+jest.mock('../../src/api/api');
 
 describe('Wallet', () => {
     let wallet: Wallet;

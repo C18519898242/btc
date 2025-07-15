@@ -29,7 +29,7 @@ function getApi(): Api {
 
     switch (config.api_provider) {
         case 'mempool':
-            return new MempoolApi(providerConfig.api_url);
+            return new MempoolApi(providerConfig.api_url, providerConfig.ws_url);
         case 'blockstream':
             return new BlockstreamApi(providerConfig.api_url);
         default:
@@ -38,9 +38,11 @@ function getApi(): Api {
 }
 
 export async function monitorWallets() {
-    logger.info(`Starting to monitor wallets on ${config.network}...`);
+    logger.info(`Starting to monitor on ${config.network}...`);
 
-    const monitor = async () => {
+    const api = getApi();
+
+    if (api instanceof MempoolApi) {
         if (!fs.existsSync(walletPath)) {
             logger.warn('wallet.json file not found. Please generate a wallet first.');
             return;
@@ -59,23 +61,61 @@ export async function monitorWallets() {
             return;
         }
 
-        logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
+        const addresses = walletsToMonitor.map(w => w.address);
+        logger.info(`Using Mempool WebSocket to monitor addresses: ${addresses.join(', ')}`);
 
-        const api = getApi();
-        const wallet = new Wallet(api);
-        for (const walletConfig of walletsToMonitor) {
-            try {
-                const balance = await wallet.getBalance(walletConfig.address);
-                const btcBalance = balance.confirmed / 100_000_000;
-                const pendingBtc = balance.unconfirmed / 100_000_000;
-                logger.info(`Address: ${walletConfig.address} | Current Balance: ${btcBalance.toFixed(8)} BTC | Pending: ${pendingBtc.toFixed(8)} BTC`);
-            } catch (error) {
-                logger.error(`Error fetching balance for wallet ${walletConfig.address}:`, error);
+        api.monitorAddresses(addresses, (txs) => {
+            for (const address in txs) {
+                const { mempool, confirmed } = txs[address];
+                if (mempool.length > 0) {
+                    logger.info(`New mempool transactions for ${address}:`);
+                    mempool.forEach((tx: any) => logger.info(JSON.stringify(tx, null, 2)));
+                }
+                if (confirmed.length > 0) {
+                    logger.info(`New confirmed transactions for ${address}:`);
+                    confirmed.forEach((tx: any) => logger.info(JSON.stringify(tx, null, 2)));
+                }
             }
-        }
-    };
+        });
+    } else {
+        logger.warn('WebSocket monitoring is only supported for Mempool API provider.');
+        logger.info('Falling back to periodic wallet balance checks.');
+        // The existing balance monitoring logic can remain here as a fallback.
+        const monitor = async () => {
+            if (!fs.existsSync(walletPath)) {
+                logger.warn('wallet.json file not found. Please generate a wallet first.');
+                return;
+            }
 
-    // Run immediately and then every minute
-    monitor();
-    setInterval(monitor, 60 * 1000);
+            const allWallets: WalletConfig[] = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
+            if (!Array.isArray(allWallets) || allWallets.length === 0) {
+                logger.warn('No wallets found in wallet.json.');
+                return;
+            }
+
+            const walletsToMonitor = allWallets.filter(w => w.network === config.network);
+
+            if (walletsToMonitor.length === 0) {
+                logger.warn(`No wallets found for the ${config.network} network in wallet.json.`);
+                return;
+            }
+
+            logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
+
+            const wallet = new Wallet(api);
+            for (const walletConfig of walletsToMonitor) {
+                try {
+                    const balance = await wallet.getBalance(walletConfig.address);
+                    const btcBalance = balance.confirmed / 100_000_000;
+                    const pendingBtc = balance.unconfirmed / 100_000_000;
+                    logger.info(`Address: ${walletConfig.address} | Current Balance: ${btcBalance.toFixed(8)} BTC | Pending: ${pendingBtc.toFixed(8)} BTC`);
+                } catch (error) {
+                    logger.error(`Error fetching balance for wallet ${walletConfig.address}:`, error);
+                }
+            }
+        };
+
+        monitor();
+        setInterval(monitor, 60 * 1000);
+    }
 }
