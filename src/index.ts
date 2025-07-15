@@ -42,6 +42,41 @@ async function main() {
 
     } else if (args[0] === 'monitor') {
         await monitorWallets();
+    } else if (args[0] === 'import-wallets') {
+        if (config.api_provider !== 'btc-node') {
+            logger.error("Wallet import is only supported for 'btc-node' api_provider.");
+            return;
+        }
+
+        if (!fs.existsSync(walletPath)) {
+            logger.error('wallet.json file not found.');
+            return;
+        }
+
+        const allWallets = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
+        const testnetWallets = allWallets.filter((w: any) => w.network === 'testnet');
+
+        if (testnetWallets.length === 0) {
+            logger.info('No testnet wallets found in wallet.json to import.');
+            return;
+        }
+
+        logger.info(`Found ${testnetWallets.length} testnet wallets. Importing...`);
+
+        const api = getApi();
+
+        for (const wallet of testnetWallets) {
+            try {
+                logger.info(`Importing address: ${wallet.address}`);
+                await api.importWallet(wallet.address);
+                logger.info(`Successfully imported and rescanned for address: ${wallet.address}`);
+            } catch (error) {
+                logger.error(`Failed to import address ${wallet.address}:`, error);
+            }
+        }
+
+        logger.info('Finished importing all testnet wallets.');
+
     } else {
         logger.info('No command specified. Starting monitor by default.');
         await monitorWallets();

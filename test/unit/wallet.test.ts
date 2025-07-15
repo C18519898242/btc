@@ -15,6 +15,7 @@ describe('Wallet', () => {
             getTxHex: jest.fn(),
             sendTx: jest.fn(),
             getBlockHeight: jest.fn(),
+            importWallet: jest.fn(),
         } as jest.Mocked<Api>;
         wallet = new Wallet(mockApi);
     });
