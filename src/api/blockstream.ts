@@ -43,4 +43,9 @@ export class BlockstreamApi implements Api {
         const { data } = await axios.get(`${this.apiUrl}/blocks/tip/height`);
         return data;
     }
+
+    async importWallet(address: string): Promise<void> {
+        logger.info(`BlockstreamApi: importWallet called for address ${address}. This API does not support wallet import.`);
+        return Promise.resolve();
+    }
 }

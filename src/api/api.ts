@@ -20,4 +20,5 @@ export interface Api {
     getTxHex(txid: string): Promise<string>;
     sendTx(txHex: string): Promise<string>;
     getBlockHeight(): Promise<number>;
+    importWallet(address: string): Promise<void>;
 }

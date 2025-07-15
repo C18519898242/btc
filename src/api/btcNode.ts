@@ -131,4 +131,10 @@ export class BtcNodeApi implements Api {
             params: [startHeight],
         }, config);
     }
+
+    async importWallet(address: string): Promise<void> {
+        await this.importAddress(address, address, false);
+        const currentBlockHeight = await this.getBlockHeight();
+        await this.rescanBlockchain(currentBlockHeight - 1);
+    }
 }

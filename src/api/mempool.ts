@@ -48,4 +48,9 @@ export class MempoolApi implements Api {
     monitorAddresses(addresses: string[], onTx: (tx: any) => void) {
 
     }
+
+    async importWallet(address: string): Promise<void> {
+        logger.info(`MempoolApi: importWallet called for address ${address}. This API does not support wallet import.`);
+        return Promise.resolve();
+    }
 }
