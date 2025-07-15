@@ -2,11 +2,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import logger from './logger';
 import config from '../config.json';
-import { Provider } from './providers/provider';
-import { MempoolProvider } from './providers/mempool';
-import { BlockstreamProvider } from './providers/blockstream';
+import { Wallet } from './wallet';
+import { MempoolApi } from './api/mempool';
+import { BlockstreamApi } from './api/blockstream';
+import { Api } from './api/api';
 
-interface Wallet {
+interface WalletConfig {
     id: string;
     address: string;
     privateKey: string;
@@ -16,7 +17,7 @@ interface Wallet {
 
 const walletPath = path.join(__dirname, '..', 'wallet.json');
 
-function getProvider(): Provider {
+function getApi(): Api {
     const networkName = config.network as keyof typeof config.networks;
     const networkConfig = config.networks[networkName];
     const apiProvider = config.api_provider as keyof typeof networkConfig;
@@ -28,9 +29,9 @@ function getProvider(): Provider {
 
     switch (config.api_provider) {
         case 'mempool':
-            return new MempoolProvider(providerConfig.api_url);
+            return new MempoolApi(providerConfig.api_url);
         case 'blockstream':
-            return new BlockstreamProvider(providerConfig.api_url);
+            return new BlockstreamApi(providerConfig.api_url);
         default:
             throw new Error(`Unsupported API provider: ${config.api_provider}`);
     }
@@ -45,7 +46,7 @@ export async function monitorWallets() {
             return;
         }
 
-        const allWallets: Wallet[] = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
+        const allWallets: WalletConfig[] = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
         if (!Array.isArray(allWallets) || allWallets.length === 0) {
             logger.warn('No wallets found in wallet.json.');
             return;
@@ -60,15 +61,16 @@ export async function monitorWallets() {
 
         logger.info(`Found ${walletsToMonitor.length} ${config.network} wallet(s) to monitor.`);
 
-        const provider = getProvider();
-        for (const wallet of walletsToMonitor) {
+        const api = getApi();
+        const wallet = new Wallet(api);
+        for (const walletConfig of walletsToMonitor) {
             try {
-                const balance = await provider.getBalance(wallet.address);
+                const balance = await wallet.getBalance(walletConfig.address);
                 const btcBalance = balance.confirmed / 100_000_000;
                 const pendingBtc = balance.unconfirmed / 100_000_000;
-                logger.info(`Address: ${wallet.address} | Current Balance: ${btcBalance.toFixed(8)} BTC | Pending: ${pendingBtc.toFixed(8)} BTC`);
+                logger.info(`Address: ${walletConfig.address} | Current Balance: ${btcBalance.toFixed(8)} BTC | Pending: ${pendingBtc.toFixed(8)} BTC`);
             } catch (error) {
-                logger.error(`Error fetching balance for wallet ${wallet.address}:`, error);
+                logger.error(`Error fetching balance for wallet ${walletConfig.address}:`, error);
             }
         }
     };
