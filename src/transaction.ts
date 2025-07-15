@@ -1,11 +1,8 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { Api } from './api/api';
+import { Wallet } from './wallet';
 import logger from './logger';
-import * as fs from 'fs';
-import * as path from 'path';
 import config from '../config.json';
-
-const walletPath = path.join(__dirname, '..', 'wallet.json');
 
 export interface InputTransaction {
     customerRefId: string;
@@ -21,19 +18,13 @@ export interface InputTransaction {
     destinationAddress: string;
 }
 
-function getWalletById(id: string) {
-    if (!fs.existsSync(walletPath)) {
-        throw new Error('wallet.json not found');
-    }
-    const wallets = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
-    return wallets.find((w: any) => w.id === id);
-}
-
 export class Transaction {
     private api: Api;
+    private wallet: Wallet;
 
     constructor(api: Api) {
         this.api = api;
+        this.wallet = new Wallet(api);
     }
 
     async create(tx: InputTransaction): Promise<bitcoin.Psbt> {
@@ -41,7 +32,7 @@ export class Transaction {
         const network = networkName === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
 
         // Find source wallet by ID
-        const sourceWallet = getWalletById(tx.sourceAccountKey);
+        const sourceWallet = this.wallet.getWalletById(tx.sourceAccountKey);
         if (!sourceWallet) {
             throw new Error(`Source wallet not found for ID: ${tx.sourceAccountKey}`);
         }
@@ -57,7 +48,7 @@ export class Transaction {
         // Determine destination address
         let destinationAddress: string;
         if (tx.destinationAccountType === 'VAULT_ACCOUNT') {
-            const destWallet = getWalletById(tx.destinationAccountKey);
+            const destWallet = this.wallet.getWalletById(tx.destinationAccountKey);
             if (!destWallet) {
                 throw new Error(`Destination wallet not found for ID: ${tx.destinationAccountKey}`);
             }
