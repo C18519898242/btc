@@ -35,7 +35,7 @@ function getApi(): Api {
         case 'blockstream':
             return new BlockstreamApi(providerConfig.api_url);
         case 'btc-node':
-            return new BtcNodeApi(providerConfig.api_url);
+            return new BtcNodeApi(providerConfig.api_url, providerConfig.username, providerConfig.password);
         default:
             throw new Error(`Unsupported API provider: ${config.api_provider}`);
     }

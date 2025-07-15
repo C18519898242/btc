@@ -10,7 +10,9 @@
                 "api_url": "https://blockstream.info/api"
             },
             "btc-node": {
-                "api_url": "http://129.150.42.37:8332"
+                "api_url": "http://129.150.42.37:8332",
+                "username": "mvgx",
+                "password": "al_mOVbdEPYTgTlnhQQO3oz06jnhsH5Ez1k7TxLMpgg"
             }
         },
         "testnet": {
@@ -24,7 +26,9 @@
                 "ws_url": "wss://mempool.space/testnet4/api/v1/ws"
             },
             "btc-node": {
-                "api_url": "http://129.150.42.37:18332"
+                "api_url": "http://129.150.42.37:18332",
+                "username": "mvgx",
+                "password": "al_mOVbdEPYTgTlnhQQO3oz06jnhsH5Ez1k7TxLMpgg"
             }
         }
     }
