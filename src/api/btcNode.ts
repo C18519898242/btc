@@ -64,4 +64,22 @@ export class BtcNodeApi implements Api {
     async sendTx(txHex: string): Promise<string> {
         return this.broadcastTx(txHex);
     }
+
+    async importAddress(address: string, label: string = '', rescan: boolean = false): Promise<void> {
+        await axios.post(this.apiUrl, {
+            jsonrpc: '1.0',
+            id: 'cline-btc-api',
+            method: 'importaddress',
+            params: [address, label, rescan],
+        });
+    }
+
+    async rescanBlockchain(startHeight: number): Promise<void> {
+        await axios.post(this.apiUrl, {
+            jsonrpc: '1.0',
+            id: 'cline-btc-api',
+            method: 'rescanblockchain',
+            params: [startHeight],
+        });
+    }
 }
