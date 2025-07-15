@@ -12,18 +12,18 @@ export class BtcNodeApi implements Api {
         const response = await axios.post(this.apiUrl, {
             jsonrpc: '1.0',
             id: 'cline-btc-api',
-            method: 'scantxoutset',
-            params: ['start', [`addr(${address})`]],
+            method: 'listunspent',
+            params: [0, 9999999, [address]],
         });
 
-        const utxos = response.data.result.unspents.map((utxo: any) => ({
+        const utxos = response.data.result.map((utxo: any) => ({
             txid: utxo.txid,
             vout: utxo.vout,
             status: {
-                confirmed: true, // scantxoutset only returns confirmed UTXOs
-                block_height: utxo.height,
-                block_hash: '', // Not provided by scantxoutset
-                block_time: 0, // Not provided by scantxoutset
+                confirmed: utxo.confirmations > 0,
+                block_height: 0, // Not provided by listunspent
+                block_hash: '', // Not provided by listunspent
+                block_time: 0, // Not provided by listunspent
             },
             value: Math.round(utxo.amount * 100000000), // Convert BTC to satoshis
         }));
