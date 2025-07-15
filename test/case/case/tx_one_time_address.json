@@ -3,7 +3,7 @@
     "customerExt1": "",
     "customerExt2": "",
     "note": "Test transaction (One Time Address)",
-    "coinKey": "BTC",
+    "coinKey": "BTC_TEST_BITCOIN_TESTNET",
     "txAmount": "0.00001",
     "txFeeLevel": "MEDIUM",
     "sourceAccountKey": "c7594483-b114-4d4f-8b6a-19d0a5a2cdb5",

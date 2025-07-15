@@ -1,4 +1,4 @@
-import { Transaction, InputTransaction } from '../../src/transaction';
+import { Transaction, InputTransaction, CoinKey } from '../../src/transaction';
 import { MempoolApi } from '../../src/api/mempool';
 import { MockSigningService } from '../../src/service/mockSigningService';
 import { Wallet } from '../../src/wallet';
@@ -33,7 +33,7 @@ describe('Transaction Integration Tests', () => {
 
     // Test case for sending to a one-time address
     test(`[${oneTimeAddressCase.customerRefId}] ${oneTimeAddressCase.note}`, async () => {
-        const txInput: InputTransaction = oneTimeAddressCase;
+        const txInput: InputTransaction = { ...oneTimeAddressCase, coinKey: CoinKey.BTC_TESTNET };
 
         // IMPORTANT: This test assumes the source wallet from the case file has funds on the configured testnet.
         console.log(`Using source wallet: ${txInput.sourceAccountKey}`);
@@ -58,7 +58,7 @@ describe('Transaction Integration Tests', () => {
 
     // Test case for sending to a vault account
     test(`[${vaultAccountCase.customerRefId}] ${vaultAccountCase.note}`, async () => {
-        const txInput: InputTransaction = vaultAccountCase;
+        const txInput: InputTransaction = { ...vaultAccountCase, coinKey: CoinKey.BTC_TESTNET };
 
         console.log(`Using source wallet: ${txInput.sourceAccountKey}`);
         console.log(`Using destination wallet: ${txInput.destinationAccountKey}`);

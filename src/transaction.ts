@@ -5,12 +5,17 @@ import logger from './logger';
 import config from '../config.json';
 import { SigningService } from './service/signingService';
 
+export enum CoinKey {
+    BTC = 'BTC',
+    BTC_TESTNET = 'BTC_TEST_BITCOIN_TESTNET',
+}
+
 export interface InputTransaction {
     customerRefId: string;
     customerExt1: string;
     customerExt2: string;
     note: string;
-    coinKey: string;
+    coinKey: CoinKey;
     txAmount: string;
     txFeeLevel: string;
     sourceAccountKey: string;
@@ -31,8 +36,17 @@ export class Transaction {
     }
 
     async create(tx: InputTransaction): Promise<bitcoin.Psbt> {
-        const networkName = config.network as keyof typeof config.networks;
-        const network = networkName === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
+        let network: bitcoin.Network;
+        switch (tx.coinKey) {
+            case CoinKey.BTC:
+                network = bitcoin.networks.bitcoin;
+                break;
+            case CoinKey.BTC_TESTNET:
+                network = bitcoin.networks.testnet;
+                break;
+            default:
+                throw new Error(`Unsupported coinKey: ${tx.coinKey}`);
+        }
 
         // Find source wallet by ID
         const sourceWallet = this.wallet.getWalletById(tx.sourceAccountKey);
