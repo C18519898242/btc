@@ -16,8 +16,8 @@ export class BlockstreamApi implements Api {
                 const { data } = await axios.get<Utxo[]>(`${this.apiUrl}/address/${address}/utxo`);
                 allUtxos.push(...data);
             } catch (error) {
-                if (axios.isAxiosError(error) && error.response?.status === 404) {
-                    // Ignore 404 errors for addresses with no UTXOs
+                if (axios.isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 400)) {
+                    logger.warn(`BlockstreamApi: Could not get UTXOs for address ${address} (status: ${error.response?.status}). This is expected for addresses with no history.`);
                     continue;
                 }
                 throw error;

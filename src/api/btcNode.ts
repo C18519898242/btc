@@ -1,5 +1,6 @@
 import { Api, Utxo } from './api';
 import axios, { AxiosRequestConfig } from 'axios';
+import logger from '../logger';
 
 export class BtcNodeApi implements Api {
     private apiUrl: string;
@@ -28,7 +29,13 @@ export class BtcNodeApi implements Api {
             id: 'cline-btc-api',
             method: 'listunspent',
             params: [0, 9999999, addresses],
-        }, config);
+        }, config).catch(error => {
+            if (error.response && error.response.data && error.response.data.error) {
+                logger.warn(`BtcNodeApi: listunspent call failed. Error: ${error.response.data.error.message}. This can happen if an address is invalid or not in the wallet.`);
+                return { data: { result: [] } }; // Return an empty result to avoid crashing
+            }
+            throw error;
+        });
 
         const utxos = response.data.result.map((utxo: any) => ({
             txid: utxo.txid,
