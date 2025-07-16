@@ -1,7 +1,8 @@
 import { Transaction, InputTransaction, CoinKey } from '../../src/transaction';
 import { getApi } from '../../src/api';
 import { MockSigningService } from '../../src/service/mockSigningService';
-import { Wallet } from '../../src/wallet';
+import { Wallet } from '../../src/wallet/wallet';
+import { WalletManager } from '../../src/wallet/walletManager';
 import { Api } from '../../src/api/api';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -17,6 +18,7 @@ describe('Transaction Integration Tests', () => {
     let signingService: MockSigningService;
     let api: Api;
     let wallet: Wallet;
+    let walletManager: WalletManager;
 
     beforeAll(() => {
         api = getApi();
@@ -24,6 +26,7 @@ describe('Transaction Integration Tests', () => {
         // but we don't have access to a real HSM. MockSigningService correctly implements the signing.
         signingService = new MockSigningService();
         wallet = new Wallet();
+        walletManager = new WalletManager();
         transaction = new Transaction();
     });
 
@@ -58,8 +61,10 @@ describe('Transaction Integration Tests', () => {
         expect(psbt).toBeDefined();
 
         // The destination address should be resolved from the wallet
-        const destWallet = wallet.getWalletById(txInput.destinationAccountKey);
-        expect(psbt.txOutputs[0].address).toBe(destWallet.address);
+        const wallets = walletManager.loadWallets();
+        const destWallet = wallets.find(w => w.id === txInput.destinationAccountKey);
+        expect(destWallet).toBeDefined();
+        expect(psbt.txOutputs[0].address).toBe(destWallet!.address);
 
         const txId = await transaction.sendTx(psbt, txInput.sourceAccountKey);
 

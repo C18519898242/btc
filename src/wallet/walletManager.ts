@@ -1,6 +1,6 @@
 import { WalletInfo } from './wallet';
-import { IWalletRepository } from './repository/repository';
-import { createWalletRepository } from './repository/repositoryFactory';
+import { IWalletRepository } from './repository/wallet.repository';
+import { createWalletRepository } from './repository/repository.factory';
 
 export class WalletManager {
     private repository: IWalletRepository;

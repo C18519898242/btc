@@ -1,24 +1,45 @@
-import { Wallet } from '../../src/wallet';
-import { getApi } from '../../src/api';
-import { Api } from '../../src/api/api';
+import { Wallet } from '../../src/wallet/wallet';
+import { WalletManager } from '../../src/wallet/walletManager';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const TEST_ADDRESS = 'mwnzUFWcdyapR8B7tNrkt3tvGpAw68TUwX';
-
-jest.setTimeout(30000);
-
-describe('Wallet Integration Tests', () => {
+describe('Wallet Integration', () => {
     let wallet: Wallet;
-    let api: Api;
+    let walletManager: WalletManager;
+    const walletPath = path.join(__dirname, '..', '..', 'wallet.json');
 
-    beforeAll(() => {
-        api = getApi();
+    beforeEach(() => {
+        // Clean up wallet.json before each test to ensure isolation
+        if (fs.existsSync(walletPath)) {
+            fs.unlinkSync(walletPath);
+        }
         wallet = new Wallet();
+        walletManager = new WalletManager();
     });
 
-    it.skip('should fetch a real balance for a testnet address', async () => {
-        const balance = await wallet.getBalance(TEST_ADDRESS);
-        expect(typeof balance.confirmed).toBe('number');
-        expect(typeof balance.unconfirmed).toBe('number');
-        expect(balance.confirmed).toBeGreaterThan(0);
+    it('should create a new wallet and save it to wallet.json', async () => {
+        // Act
+        const newWallet = await wallet.createWallet();
+        walletManager.saveWallet(newWallet);
+
+        // Assert
+        expect(fs.existsSync(walletPath)).toBe(true);
+        const fileContent = fs.readFileSync(walletPath, 'utf-8');
+        const wallets = JSON.parse(fileContent);
+        expect(wallets).toHaveLength(1);
+        expect(wallets[0]).toEqual(newWallet);
+    });
+
+    it('should load wallets from wallet.json', async () => {
+        // Arrange
+        const newWallet = await wallet.createWallet();
+        walletManager.saveWallet(newWallet);
+
+        // Act
+        const loadedWallets = walletManager.loadWallets();
+
+        // Assert
+        expect(loadedWallets).toHaveLength(1);
+        expect(loadedWallets[0]).toEqual(newWallet);
     });
 });

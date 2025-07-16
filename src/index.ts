@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { monitorWallets } from './monitor';
-import { Wallet } from './wallet';
-import { WalletManager } from './walletManager';
+import { Wallet } from './wallet/wallet';
+import { WalletManager } from './wallet/walletManager';
 import logger from './logger';
 import { getApi } from './api';
 import config from '../config.json';

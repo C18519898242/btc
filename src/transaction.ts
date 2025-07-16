@@ -1,7 +1,8 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { Api } from './api/api';
 import { getApi } from './api';
-import { Wallet } from './wallet';
+import { Wallet } from './wallet/wallet';
+import { WalletManager } from './wallet/walletManager';
 import logger from './logger';
 import { SigningService } from './service/signingService';
 import { MockSigningService } from './service/mockSigningService';
@@ -27,12 +28,12 @@ export interface InputTransaction {
 
 export class Transaction {
     private api: Api;
-    private wallet: Wallet;
+    private walletManager: WalletManager;
     private signingService: SigningService;
 
     constructor() {
         this.api = getApi();
-        this.wallet = new Wallet();
+        this.walletManager = new WalletManager();
         this.signingService = new MockSigningService();
     }
 
@@ -49,8 +50,10 @@ export class Transaction {
                 throw new Error(`Unsupported coinKey: ${tx.coinKey}`);
         }
 
+        const allWallets = this.walletManager.loadWallets();
+
         // Find source wallet by ID
-        const sourceWallet = this.wallet.getWalletById(tx.sourceAccountKey);
+        const sourceWallet = allWallets.find(w => w.id === tx.sourceAccountKey);
         if (!sourceWallet) {
             throw new Error(`Source wallet not found for ID: ${tx.sourceAccountKey}`);
         }
@@ -66,7 +69,7 @@ export class Transaction {
         // Determine destination address
         let destinationAddress: string;
         if (tx.destinationAccountType === 'VAULT_ACCOUNT') {
-            const destWallet = this.wallet.getWalletById(tx.destinationAccountKey);
+            const destWallet = allWallets.find(w => w.id === tx.destinationAccountKey);
             if (!destWallet) {
                 throw new Error(`Destination wallet not found for ID: ${tx.destinationAccountKey}`);
             }

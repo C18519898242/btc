@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { WalletInfo } from '../wallet';
-import { IWalletRepository } from './repository';
-import logger from '../logger';
+import { IWalletRepository } from './wallet.repository';
+import logger from '../../logger';
 
 export class JsonWalletRepository implements IWalletRepository {
     private readonly walletPath: string;

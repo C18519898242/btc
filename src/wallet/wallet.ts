@@ -1,14 +1,9 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import * as bitcoin from 'bitcoinjs-lib';
-import config from '../config.json';
-import { v4 as uuidv4 } from 'uuid';
-import { Api } from './api/api';
-import { getApi, getAllApis } from './api';
-import { SigningService } from './service/signingService';
-import { MockSigningService } from './service/mockSigningService';
-
-const walletPath = path.join(__dirname, '..', 'wallet.json');
+import config from '../../config.json';
+import { Api } from '../api/api';
+import { getApi, getAllApis } from '../api';
+import { SigningService } from '../service/signingService';
+import { MockSigningService } from '../service/mockSigningService';
 
 export type WalletInfo = {
     id: string;
@@ -56,24 +51,6 @@ export class Wallet {
         }
 
         return newWallet;
-    }
-
-    getWalletByAddress(address: string) {
-        if (!fs.existsSync(walletPath)) {
-            throw new Error('wallet.json not found');
-        }
-        const fileContent = fs.readFileSync(walletPath, 'utf-8');
-        const wallets = JSON.parse(fileContent);
-        return wallets.find((w: any) => w.address === address);
-    }
-
-    getWalletById(id: string) {
-        if (!fs.existsSync(walletPath)) {
-            throw new Error('wallet.json not found');
-        }
-        const fileContent = fs.readFileSync(walletPath, 'utf-8');
-        const wallets = JSON.parse(fileContent);
-        return wallets.find((w: any) => w.id === id);
     }
 
     async getBalance(address: string): Promise<{ confirmed: number; unconfirmed: number }> {
