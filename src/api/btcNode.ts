@@ -17,6 +17,18 @@ export class BtcNodeApi implements Api {
     }
 
     async getUtxos(addresses: string[]): Promise<Utxo[]> {
+        // First, get all addresses known to the wallet to prevent errors with listunspent
+        const knownAddresses = await this.listAddresses();
+        const knownAddressSet = new Set(knownAddresses);
+
+        // Filter the input addresses to only include those that exist in the wallet
+        const validAddresses = addresses.filter(addr => knownAddressSet.has(addr));
+
+        if (validAddresses.length === 0) {
+            logger.info('BtcNodeApi: No valid addresses provided to getUtxos, returning empty array.');
+            return [];
+        }
+
         const config: AxiosRequestConfig = {};
         if (this.auth.username && this.auth.password) {
             config.auth = {
@@ -28,14 +40,8 @@ export class BtcNodeApi implements Api {
             jsonrpc: '1.0',
             id: 'cline-btc-api',
             method: 'listunspent',
-            params: [0, 9999999, addresses],
-        }, config).catch(error => {
-            if (error.response && error.response.data && error.response.data.error) {
-                logger.warn(`BtcNodeApi: listunspent call failed. Error: ${error.response.data.error.message}. This can happen if an address is invalid or not in the wallet.`);
-                return { data: { result: [] } }; // Return an empty result to avoid crashing
-            }
-            throw error;
-        });
+            params: [0, 9999999, validAddresses],
+        }, config);
 
         const utxos = response.data.result.map((utxo: any) => ({
             txid: utxo.txid,

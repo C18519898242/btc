@@ -45,10 +45,6 @@ describe.each(apis.map(api => [api.constructor.name, api]))('%s Integration Test
         });
 
         it('should handle multiple addresses, some with and some without UTXOs', async () => {
-            if (apiName === 'BtcNodeApi') {
-                console.log(`[${apiName}] Skipping multi-address test due to listunspent limitations.`);
-                return;
-            }
             const addresses = [TEST_ADDRESS_WITH_UTXOS, TEST_ADDRESS_WITHOUT_UTXOS];
             const utxos = await api.getUtxos(addresses);
             console.log(`[${apiName}] UTXOs for multiple addresses:`, JSON.stringify(utxos, null, 2));
