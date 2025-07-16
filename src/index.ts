@@ -10,7 +10,7 @@ const walletPath = path.join(__dirname, '..', 'wallet.json');
 
 async function main() {
     const args = process.argv.slice(2);
-    const walletManager = new WalletManager(walletPath);
+    const walletManager = new WalletManager();
 
     if (args[0] === 'generate') {
         const count = args[1] ? parseInt(args[1], 10) : 1;
