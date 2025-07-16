@@ -22,14 +22,11 @@ async function main() {
         logger.info(`Generating ${count} testnet wallets...`);
 
         const wallet = new Wallet();
-        const existingWallets = walletManager.loadWallets();
 
         for (let i = 0; i < count; i++) {
             const newWallet = await wallet.createWallet('testnet');
-            existingWallets.push(newWallet);
+            walletManager.saveWallet(newWallet);
         }
-
-        walletManager.saveWallets(existingWallets);
 
     } else if (args[0] === 'monitor') {
         await monitorWallets();

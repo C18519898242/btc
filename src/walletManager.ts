@@ -22,12 +22,14 @@ export class WalletManager {
         return [];
     }
 
-    public saveWallets(wallets: any[]): void {
+    public saveWallet(wallet: any): void {
+        const wallets = this.loadWallets();
+        wallets.push(wallet);
         try {
             fs.writeFileSync(this.walletPath, JSON.stringify(wallets, null, 2));
-            logger.info(`Successfully saved ${wallets.length} wallets to ${this.walletPath}.`);
+            logger.info(`Successfully saved new wallet to ${this.walletPath}. Total wallets: ${wallets.length}`);
         } catch (error) {
-            logger.error(`Error saving wallets to ${this.walletPath}:`, error);
+            logger.error(`Error saving wallet to ${this.walletPath}:`, error);
         }
     }
 }
