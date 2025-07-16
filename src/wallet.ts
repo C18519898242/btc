@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as bitcoin from 'bitcoinjs-lib';
+import config from '../config.json';
 import { v4 as uuidv4 } from 'uuid';
 import { Api } from './api/api';
 import { getApi, getAllApis } from './api';
@@ -25,10 +26,11 @@ export class Wallet {
         this.signingService = new MockSigningService();
     }
 
-    async createWallet(networkName: string) {
+    async createWallet() {
+        const networkName = config.network;
         const network = (bitcoin.networks as any)[networkName];
         if (!network) {
-            throw new Error(`Invalid network: ${networkName}`);
+            throw new Error(`Invalid network from config: ${networkName}`);
         }
 
         const keyId = this.signingService.createPrivateKey();

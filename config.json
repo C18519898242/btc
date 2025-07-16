@@ -1,5 +1,5 @@
 {
-    "network": "testnet4",
+    "network": "testnet",
     "api_provider": "btc-node",
     "networks": {
         "mainnet": {
@@ -18,12 +18,9 @@
         "testnet": {
             "blockstream": {
                 "api_url": "https://blockstream.info/testnet/api"
-            }
-        },
-        "testnet4": {
+            },
             "mempool": {
-                "api_url": "https://mempool.space/testnet4/api",
-                "ws_url": "wss://mempool.space/testnet4/api/v1/ws"
+                "api_url": "https://mempool.space/testnet/api"
             },
             "btc-node": {
                 "api_url": "http://129.150.42.37:18332",

@@ -24,7 +24,7 @@ async function main() {
         const wallet = new Wallet();
 
         for (let i = 0; i < count; i++) {
-            const newWallet = await wallet.createWallet('testnet');
+            const newWallet = await wallet.createWallet();
             walletManager.saveWallet(newWallet);
         }
 
