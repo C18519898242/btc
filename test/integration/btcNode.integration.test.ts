@@ -42,6 +42,16 @@ describe('BtcNodeApi Integration Tests', () => {
             }
         });
 
+        it('should list all addresses in the wallet', async () => {
+            // Ensure at least one address is imported before testing
+            await api.importAddress(TEST_ADDRESS, 'test-label', false);
+
+            const addresses = await api.listAddresses();
+            expect(Array.isArray(addresses)).toBe(true);
+            expect(addresses.length).toBeGreaterThan(0);
+            expect(addresses).toContain(TEST_ADDRESS);
+        });
+
     } else {
         describe.skip('BtcNodeApi tests', () => {
             it('skipping because btc-node is not configured for the current network', () => { });

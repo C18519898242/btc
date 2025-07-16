@@ -144,4 +144,24 @@ export class BtcNodeApi implements Api {
         const currentBlockHeight = await this.getBlockHeight();
         await this.rescanBlockchain(currentBlockHeight - 1);
     }
+
+    async listAddresses(): Promise<string[]> {
+        const config: AxiosRequestConfig = {};
+        if (this.auth.username && this.auth.password) {
+            config.auth = {
+                username: this.auth.username,
+                password: this.auth.password,
+            };
+        }
+        const response = await axios.post(this.getWalletUrl(), {
+            jsonrpc: '1.0',
+            id: 'cline-btc-api',
+            method: 'listreceivedbyaddress',
+            params: [0, true, true],
+        }, config);
+
+        const addresses = response.data.result.map((item: any) => item.address);
+        logger.info(`BtcNodeApi: Found ${addresses.length} addresses in wallet: ${JSON.stringify(addresses)}`);
+        return addresses;
+    }
 }
