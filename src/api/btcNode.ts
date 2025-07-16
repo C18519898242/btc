@@ -15,7 +15,7 @@ export class BtcNodeApi implements Api {
         return `${this.apiUrl.replace(/\/$/, '')}${this.walletPath}`;
     }
 
-    async getUtxos(address: string): Promise<Utxo[]> {
+    async getUtxos(addresses: string[]): Promise<Utxo[]> {
         const config: AxiosRequestConfig = {};
         if (this.auth.username && this.auth.password) {
             config.auth = {
@@ -27,7 +27,7 @@ export class BtcNodeApi implements Api {
             jsonrpc: '1.0',
             id: 'cline-btc-api',
             method: 'listunspent',
-            params: [0, 9999999, [address]],
+            params: [0, 9999999, addresses],
         }, config);
 
         const utxos = response.data.result.map((utxo: any) => ({

@@ -9,24 +9,21 @@ export class BlockstreamApi implements Api {
         this.apiUrl = apiUrl;
     }
 
-    async getUtxos(address: string): Promise<Utxo[]> {
-        const url = `${this.apiUrl}/address/${address}/utxo`;
-        try {
-            const { data } = await axios.get<any[]>(url);
-            return data.map(utxo => ({
-                txid: utxo.txid,
-                vout: utxo.vout,
-                status: utxo.status,
-                value: utxo.value,
-            }));
-        } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.status === 404) {
-                logger.warn(`No UTXOs found for address ${address}.`);
-                return [];
+    async getUtxos(addresses: string[]): Promise<Utxo[]> {
+        const allUtxos: Utxo[] = [];
+        for (const address of addresses) {
+            try {
+                const { data } = await axios.get<Utxo[]>(`${this.apiUrl}/address/${address}/utxo`);
+                allUtxos.push(...data);
+            } catch (error) {
+                if (axios.isAxiosError(error) && error.response?.status === 404) {
+                    // Ignore 404 errors for addresses with no UTXOs
+                    continue;
+                }
+                throw error;
             }
-            logger.error(`Error fetching UTXOs for address ${address}:`, error);
-            throw error;
         }
+        return allUtxos;
     }
 
     async getTxHex(txid: string): Promise<string> {

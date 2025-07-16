@@ -16,7 +16,7 @@ export interface Balance {
 }
 
 export interface Api {
-    getUtxos(address: string): Promise<Utxo[]>;
+    getUtxos(addresses: string[]): Promise<Utxo[]>;
     getTxHex(txid: string): Promise<string>;
     sendTx(txHex: string): Promise<string>;
     getBlockHeight(): Promise<number>;

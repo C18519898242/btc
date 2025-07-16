@@ -57,7 +57,7 @@ export class Transaction {
         const sourceAddress = sourceWallet.address;
 
         // Get and log balance
-        const utxos = await this.api.getUtxos(sourceAddress);
+        const utxos = await this.api.getUtxos([sourceAddress]);
         const totalBalance = utxos.reduce((acc, utxo) => acc + utxo.value, 0);
         const amountToSend = Math.floor(parseFloat(tx.txAmount) * 100_000_000);
         logger.info(`Source wallet ${sourceAddress} balance: ${totalBalance} satoshis.`);

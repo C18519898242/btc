@@ -50,7 +50,7 @@ describe('Wallet', () => {
             const balance = await wallet.getBalance(address);
 
             expect(balance).toEqual(expectedBalance);
-            expect(mockApi.getUtxos).toHaveBeenCalledWith(address);
+            expect(mockApi.getUtxos).toHaveBeenCalledWith([address]);
         });
 
         it('should return zero balance if there are no utxos', async () => {
@@ -65,7 +65,7 @@ describe('Wallet', () => {
             const balance = await wallet.getBalance(address);
 
             expect(balance).toEqual(expectedBalance);
-            expect(mockApi.getUtxos).toHaveBeenCalledWith(address);
+            expect(mockApi.getUtxos).toHaveBeenCalledWith([address]);
         });
     });
 

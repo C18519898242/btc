@@ -75,7 +75,7 @@ export class Wallet {
     }
 
     async getBalance(address: string): Promise<{ confirmed: number; unconfirmed: number }> {
-        const utxos = await this.api.getUtxos(address);
+        const utxos = await this.api.getUtxos([address]);
         const confirmed = utxos
             .filter(utxo => utxo.status.confirmed)
             .reduce((acc, utxo) => acc + utxo.value, 0);

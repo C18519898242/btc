@@ -27,14 +27,14 @@ describe('BtcNodeApi Integration Tests', () => {
             // and for the address to have unspent outputs.
             try {
                 await api.importAddress(TEST_ADDRESS, 'test-label', false);
-                const utxos = await api.getUtxos(TEST_ADDRESS);
+                const utxos = await api.getUtxos([TEST_ADDRESS]);
                 expect(Array.isArray(utxos)).toBe(true);
                 // We can't guarantee UTXOs, so we just check the call succeeds.
             } catch (error: any) {
                 // It's okay if the wallet already has the address
                 if (error.response && error.response.data && error.response.data.error.code === -4) {
                     console.warn('Address already imported, which is fine for this test.');
-                    const utxos = await api.getUtxos(TEST_ADDRESS);
+                    const utxos = await api.getUtxos([TEST_ADDRESS]);
                     expect(Array.isArray(utxos)).toBe(true);
                 } else {
                     throw error;

@@ -11,23 +11,13 @@ export class MempoolApi implements Api {
         this.wsUrl = wsUrl;
     }
 
-    async getUtxos(address: string): Promise<Utxo[]> {
-        const url = `${this.apiUrl}/address/${address}/utxo`;
-        try {
-            const { data } = await axios.get<Utxo[]>(url);
-            return data;
-        } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.status === 404) {
-                logger.warn(`No UTXOs found for address ${address}.`);
-                return [];
-            }
-            logger.error(`Error fetching UTXOs for address ${address}:`, error);
-            throw error;
-        }
-    }
-
     async getTxHex(txid: string): Promise<string> {
         const { data } = await axios.get(`${this.apiUrl}/tx/${txid}/hex`);
+        return data;
+    }
+
+    async getBlockHeight(): Promise<number> {
+        const { data } = await axios.get(`${this.apiUrl}/blocks/tip/height`);
         return data;
     }
 
@@ -36,17 +26,22 @@ export class MempoolApi implements Api {
         return txid;
     }
 
-    async getBlockHeight(): Promise<number> {
-        const { data } = await axios.get(`${this.apiUrl}/blocks/tip/height`);
-        return data;
-    }
-
-    monitorTxs(onTx: (txids: string[]) => void) {
-
-    }
-
-    monitorAddresses(addresses: string[], onTx: (tx: any) => void) {
-
+    async getUtxos(addresses: string[]): Promise<Utxo[]> {
+        const allUtxos: Utxo[] = [];
+        for (const address of addresses) {
+            const url = `${this.apiUrl}/address/${address}/utxo`;
+            try {
+                const { data } = await axios.get<Utxo[]>(url);
+                allUtxos.push(...data);
+            } catch (error) {
+                if (axios.isAxiosError(error) && error.response?.status === 404) {
+                    // Ignore 404 errors for addresses with no UTXOs
+                    continue;
+                }
+                throw error;
+            }
+        }
+        return allUtxos;
     }
 
     async importWallet(address: string): Promise<void> {
