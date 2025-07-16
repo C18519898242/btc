@@ -1,6 +1,6 @@
 import { WalletInfo } from '../wallet';
 
-export interface IWalletStorage {
+export interface IWalletRepository {
     loadWallets(): WalletInfo[];
     saveWallet(wallet: WalletInfo): void;
 }

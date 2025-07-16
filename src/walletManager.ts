@@ -1,19 +1,19 @@
 import { WalletInfo } from './wallet';
-import { IWalletStorage } from './storage/storage';
-import { createWalletStorage } from './storage/storageFactory';
+import { IWalletRepository } from './repository/repository';
+import { createWalletRepository } from './repository/repositoryFactory';
 
 export class WalletManager {
-    private storage: IWalletStorage;
+    private repository: IWalletRepository;
 
     constructor() {
-        this.storage = createWalletStorage();
+        this.repository = createWalletRepository();
     }
 
     public loadWallets(): WalletInfo[] {
-        return this.storage.loadWallets();
+        return this.repository.loadWallets();
     }
 
     public saveWallet(wallet: WalletInfo): void {
-        this.storage.saveWallet(wallet);
+        this.repository.saveWallet(wallet);
     }
 }
