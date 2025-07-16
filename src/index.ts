@@ -1,7 +1,7 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import { monitorWallets } from './monitor';
 import { Wallet } from './wallet';
+import { WalletManager } from './walletManager';
 import logger from './logger';
 import { getApi } from './api';
 import config from '../config.json';
@@ -10,6 +10,7 @@ const walletPath = path.join(__dirname, '..', 'wallet.json');
 
 async function main() {
     const args = process.argv.slice(2);
+    const walletManager = new WalletManager(walletPath);
 
     if (args[0] === 'generate') {
         const count = args[1] ? parseInt(args[1], 10) : 1;
@@ -21,20 +22,14 @@ async function main() {
         logger.info(`Generating ${count} testnet wallets...`);
 
         const wallet = new Wallet();
-
-        let existingWallets: any[] = [];
-        if (fs.existsSync(walletPath)) {
-            const fileContent = fs.readFileSync(walletPath, 'utf-8');
-            existingWallets = JSON.parse(fileContent);
-        }
+        const existingWallets = walletManager.loadWallets();
 
         for (let i = 0; i < count; i++) {
             const newWallet = await wallet.createWallet('testnet');
             existingWallets.push(newWallet);
         }
 
-        fs.writeFileSync(walletPath, JSON.stringify(existingWallets, null, 2));
-        logger.info(`Successfully generated and saved ${count} new wallets to wallet.json.`);
+        walletManager.saveWallets(existingWallets);
 
     } else if (args[0] === 'monitor') {
         await monitorWallets();
@@ -44,12 +39,11 @@ async function main() {
             return;
         }
 
-        if (!fs.existsSync(walletPath)) {
-            logger.error('wallet.json file not found.');
+        const allWallets = walletManager.loadWallets();
+        if (allWallets.length === 0) {
+            logger.error('wallet.json file not found or is empty.');
             return;
         }
-
-        const allWallets = JSON.parse(fs.readFileSync(walletPath, 'utf-8'));
         const testnetWallets = allWallets.filter((w: any) => w.network === 'testnet');
 
         if (testnetWallets.length === 0) {
