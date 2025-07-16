@@ -1,29 +1,32 @@
-import { WalletManager } from './wallet/walletManager';
-import { Wallet } from './wallet/wallet';
 import logger from './logger';
-
-async function checkWallet(walletInfo: any, wallet: Wallet) {
-    try {
-        const balance = await wallet.getBalance(walletInfo.address);
-        logger.info(`Balance for ${walletInfo.address}: ${balance.confirmed} (confirmed), ${balance.unconfirmed} (unconfirmed)`);
-    } catch (error) {
-        logger.error(`Failed to get balance for ${walletInfo.address}:`, error);
-    }
-}
+import * as cron from 'node-cron';
+import { getApi } from './api';
 
 export async function monitorWallets() {
-    const walletManager = new WalletManager();
-    const wallet = new Wallet();
-    const allWallets = walletManager.loadWallets();
+    logger.info('Starting block monitor...');
 
-    if (allWallets.length === 0) {
-        logger.info('No wallets to monitor.');
-        return;
-    }
+    const api = getApi();
+    let lastKnownHeight = 0;
 
-    logger.info(`Monitoring ${allWallets.length} wallets...`);
+    // Schedule the task to run every 10 seconds
+    cron.schedule('*/10 * * * * *', async () => {
+        try {
+            const currentHeight = await api.getBlockHeight();
 
-    for (const walletInfo of allWallets) {
-        await checkWallet(walletInfo, wallet);
-    }
+            if (lastKnownHeight === 0) {
+                logger.info(`Initial block height: ${currentHeight}`);
+            } else if (currentHeight > lastKnownHeight) {
+                logger.info(`New block detected! New height: ${currentHeight}`);
+            } else {
+                logger.info(`Current block height: ${currentHeight}`);
+            }
+
+            lastKnownHeight = currentHeight;
+
+        } catch (error) {
+            logger.error('Failed to get latest block height:', error);
+        }
+    });
+
+    logger.info('Block monitor is scheduled to run every 10 seconds. Press Ctrl+C to exit.');
 }

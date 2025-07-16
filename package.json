@@ -15,6 +15,7 @@
     "devDependencies": {
         "@types/jest": "^30.0.0",
         "@types/node": "^24.0.13",
+        "@types/node-cron": "^3.0.11",
         "@types/uuid": "^10.0.0",
         "jest": "^30.0.4",
         "ts-jest": "^29.4.0",
@@ -26,6 +27,7 @@
         "axios": "^1.10.0",
         "bitcoinjs-lib": "^6.1.7",
         "ecpair": "^3.0.0",
+        "node-cron": "^4.2.1",
         "tiny-secp256k1": "^2.2.4",
         "uuid": "^11.1.0",
         "winston": "^3.17.0",
